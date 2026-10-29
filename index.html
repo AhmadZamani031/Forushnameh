@@ -8,7 +8,7 @@
 <script defer src="app.js"></script>
 </head>
 <body>
-<header class="topbar"><div class="brand-mark">ف</div><div><div class="brand-name">فروش‌نامه</div><div class="brand-subtitle">سازندهٔ سادهٔ فاکتور فروش</div></div><span class="version">نسخهٔ آزمایشی ۱</span></header>
+<header class="topbar"><div class="brand-mark">ف</div><div><div class="brand-name">فروش‌نامه</div><div class="brand-subtitle">سازندهٔ سادهٔ فاکتور فروش</div></div><span class="version">نسخهٔ آزمایشی ۲</span></header>
 <main class="page">
 <section class="intro"><p class="eyebrow">شروع ساده، قدم‌به‌قدم</p><h1>فاکتور فروش خودت را بساز</h1><p class="intro-text">اطلاعات را در فرم وارد کن. پیش‌نمایش فاکتور هم‌زمان به‌روزرسانی می‌شود؛ سپس می‌توانی آن را به شکل تصویر PNG ذخیره کنی.</p></section>
 <div class="workspace">
@@ -26,7 +26,13 @@
 <div class="form-section"><div class="items-heading"><h3>کالاها و خدمات</h3><button type="button" id="addItem" class="button button-light">＋ افزودن ردیف</button></div><div id="itemsEditor" class="items-editor"></div><p class="helper">قیمت هر واحد را به واحد پول انتخاب‌شده وارد کن. مبلغ هر ردیف و جمع کل خودکار محاسبه می‌شود.</p></div>
 <div class="form-section"><div class="field"><label for="notes">توضیحات پایانی</label><textarea id="notes" rows="3" placeholder="مثلاً: از خرید شما سپاسگزاریم."></textarea></div></div>
 <button type="button" id="downloadPng" class="button button-primary download-button">↓ دانلود تصویر فاکتور (PNG)</button><p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
-<p class="privacy-note"><strong>یادآوری:</strong> این نسخه اطلاعات را به سرور نمی‌فرستد و در پایگاه داده ذخیره نمی‌کند. با بستن یا تازه‌کردن صفحه، ممکن است اطلاعات واردشده از بین برود.</p>
+<p class="privacy-note"><strong>یادآوری:</strong> فاکتورها در حافظهٔ همین مرورگر ذخیره می‌شوند و به سرور فرستاده نمی‌شوند. با پاک‌کردن اطلاعات مرورگر ممکن است از بین بروند؛ هنوز پشتیبان‌گیری یا همگام‌سازی بین دستگاه‌ها وجود ندارد.</p>
+<div class="form-section saved-section">
+<div class="section-heading"><div><h2>فاکتورهای ذخیره‌شده</h2><p>فاکتورهای این مرورگر را ببین، باز کن یا حذف کن.</p></div><span class="step-number">۳</span></div>
+<div class="saved-actions"><button type="button" id="saveInvoice" class="button button-primary">ذخیرهٔ این فاکتور</button><button type="button" id="newInvoice" class="button button-light">فاکتور جدید</button></div>
+<p id="savedStatus" class="status-message" role="status" aria-live="polite"></p>
+<div id="savedInvoices" class="saved-invoices"><p class="helper">هنوز فاکتوری ذخیره نشده است.</p></div>
+</div>
 </section>
 <section class="preview-column"><div class="preview-label"><div><span class="step-number">۲</span><strong>پیش‌نمایش فاکتور</strong></div><span class="live-indicator"><span></span> به‌روزرسانی زنده</span></div>
 <article id="invoicePreview" class="invoice">
