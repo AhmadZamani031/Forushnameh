@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#173f35"><title>فروش‌نامه | سازنده فاکتور</title>
+<link rel="stylesheet" href="styles.css">
+<script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script defer src="app.js"></script>
+</head>
+<body>
+<header class="topbar"><div class="brand-mark">ف</div><div><div class="brand-name">فروش‌نامه</div><div class="brand-subtitle">سازندهٔ سادهٔ فاکتور فروش</div></div><span class="version">نسخهٔ آزمایشی ۱</span></header>
+<main class="page">
+<section class="intro"><p class="eyebrow">شروع ساده، قدم‌به‌قدم</p><h1>فاکتور فروش خودت را بساز</h1><p class="intro-text">اطلاعات را در فرم وارد کن. پیش‌نمایش فاکتور هم‌زمان به‌روزرسانی می‌شود؛ سپس می‌توانی آن را به شکل تصویر PNG ذخیره کنی.</p></section>
+<div class="workspace">
+<section class="editor panel">
+<div class="section-heading"><div><h2>اطلاعات فاکتور</h2><p>موارد را پر کن؛ نمونه‌ها قابل ویرایش‌اند.</p></div><span class="step-number">۱</span></div>
+<div class="form-section"><h3>اطلاعات فروشگاه</h3>
+<div class="field"><label for="storeName">نام فروشگاه یا کسب‌وکار</label><input id="storeName" value="فروشگاه من" placeholder="مثلاً فروشگاه بهار"></div>
+<div class="field"><label for="storePhone">شماره تماس</label><input id="storePhone" inputmode="tel" placeholder="مثلاً ۰۹۱۲۱۲۳۴۵۶۷"></div>
+<div class="field"><label for="storeAddress">نشانی فروشگاه</label><textarea id="storeAddress" rows="2" placeholder="نشانی (اختیاری)"></textarea></div></div>
+<div class="form-section"><h3>اطلاعات مشتری و فاکتور</h3>
+<div class="field"><label for="customerName">نام مشتری</label><input id="customerName" placeholder="نام مشتری"></div>
+<div class="field"><label for="customerPhone">شماره تماس مشتری</label><input id="customerPhone" inputmode="tel" placeholder="اختیاری"></div>
+<div class="two-columns"><div class="field"><label for="invoiceNumber">شماره فاکتور</label><input id="invoiceNumber" value="۱۰۰۱"></div><div class="field"><label for="invoiceDate">تاریخ</label><input id="invoiceDate" placeholder="مثلاً ۱۴۰۵/۰۸/۰۷"></div></div>
+<div class="field"><label for="currency">واحد پول</label><select id="currency"><option value="تومان">تومان</option><option value="ریال">ریال</option></select></div></div>
+<div class="form-section"><div class="items-heading"><h3>کالاها و خدمات</h3><button type="button" id="addItem" class="button button-light">＋ افزودن ردیف</button></div><div id="itemsEditor" class="items-editor"></div><p class="helper">قیمت هر واحد را به واحد پول انتخاب‌شده وارد کن. مبلغ هر ردیف و جمع کل خودکار محاسبه می‌شود.</p></div>
+<div class="form-section"><div class="field"><label for="notes">توضیحات پایانی</label><textarea id="notes" rows="3" placeholder="مثلاً: از خرید شما سپاسگزاریم."></textarea></div></div>
+<button type="button" id="downloadPng" class="button button-primary download-button">↓ دانلود تصویر فاکتور (PNG)</button><p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
+<p class="privacy-note"><strong>یادآوری:</strong> این نسخه اطلاعات را به سرور نمی‌فرستد و در پایگاه داده ذخیره نمی‌کند. با بستن یا تازه‌کردن صفحه، ممکن است اطلاعات واردشده از بین برود.</p>
+</section>
+<section class="preview-column"><div class="preview-label"><div><span class="step-number">۲</span><strong>پیش‌نمایش فاکتور</strong></div><span class="live-indicator"><span></span> به‌روزرسانی زنده</span></div>
+<article id="invoicePreview" class="invoice">
+<div class="invoice-top"><div><div class="invoice-kicker">فاکتور فروش</div><h2 id="previewStoreName">فروشگاه من</h2><p id="previewStoreAddress" class="muted"></p><p id="previewStorePhone" class="muted"></p></div><div class="invoice-symbol">ف</div></div>
+<div class="invoice-meta"><div><span>شماره فاکتور</span><strong id="previewInvoiceNumber">۱۰۰۱</strong></div><div><span>تاریخ</span><strong id="previewInvoiceDate">—</strong></div></div>
+<div class="customer-block"><span class="small-label">صورتحساب برای</span><strong id="previewCustomerName">مشتری گرامی</strong><span id="previewCustomerPhone" class="muted"></span></div>
+<div class="table-wrap"><table class="invoice-table"><thead><tr><th>شرح کالا / خدمات</th><th>تعداد</th><th>قیمت واحد</th><th>مبلغ</th></tr></thead><tbody id="previewItems"></tbody></table></div>
+<div class="total-area"><div class="total-line grand-total"><span>مبلغ قابل پرداخت</span><strong><span id="previewTotal">۰</span> <small id="previewCurrency">تومان</small></strong></div></div>
+<div id="previewNotesBlock" class="invoice-notes"><span class="small-label">توضیحات</span><p id="previewNotes">از خرید شما سپاسگزاریم.</p></div>
+<div class="invoice-footer"><span>از اعتماد شما سپاسگزاریم</span><span>فروش‌نامه</span></div>
+</article><p class="preview-tip">✦ این تصویر برای اشتراک‌گذاری مناسب است. خروجی PDF را در مراحل بعدی اضافه می‌کنیم.</p>
+</section></div><footer class="site-footer">فروش‌نامه — نسخهٔ آغازین و آزمایشی</footer></main>
+</body></html>
