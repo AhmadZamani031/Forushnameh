@@ -24,3 +24,19 @@ input,textarea,select{width:100%;border:1px solid #dfe7e2;border-radius:10px;bac
 .saved-invoice-actions { display:flex; flex-wrap:wrap; gap:7px; flex-shrink:0; }
 .button-danger { color:#9b2c2c; background:#fff0f0; border:1px solid #f0caca; }
 @media (max-width: 520px) { .saved-invoice { align-items:stretch; flex-direction:column; } .saved-invoice-actions { width:100%; } .saved-invoice-actions .button { flex:1; } }
+
+/* Phase 3: products, customers and backup */
+.management-section .section-heading,.data-tools .section-heading{margin-bottom:16px}
+.management-form{background:#fbfdfb;border:1px solid var(--line);border-radius:13px;padding:14px;margin:12px 0}
+.button-primary{background:var(--green);color:#fff}
+.button-primary:hover{background:var(--green2)}
+.records-list{display:grid;gap:9px;margin-top:12px}
+.record-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+.record-main{display:flex;flex-direction:column;gap:5px;min-width:0}
+.record-main strong{font-size:13px;overflow-wrap:anywhere}
+.record-main span{font-size:11px;color:var(--muted);line-height:1.8}
+.record-actions{display:flex;gap:6px;flex-shrink:0}
+.low-stock{color:#b45309}
+.import-label{display:inline-flex;align-items:center;cursor:pointer}
+.saved-section{margin-top:18px}
+@media(max-width:560px){.record-row{align-items:stretch;flex-direction:column}.record-actions{width:100%}.record-actions .button{flex:1}}
