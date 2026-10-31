@@ -1,92 +1,138 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#173f35"><title>فروش‌نامه | سازنده فاکتور</title>
-<link rel="stylesheet" href="styles.css">
-<script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script defer src="app.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سیستم حسابداری و صدور فاکتور</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- کتابخانه html2pdf برای خروجی PDF استاندارد -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-<header class="topbar"><div class="brand-mark">ف</div><div><div class="brand-name">فروش‌نامه</div><div class="brand-subtitle">مدیریت فاکتور، کالا و مشتری</div></div><span class="version">نسخهٔ آزمایشی ۳</span></header>
-<main class="page">
-<section class="intro"><p class="eyebrow">شروع ساده، قدم‌به‌قدم</p><h1>فاکتور و اطلاعات کسب‌وکارت را مدیریت کن</h1><p class="intro-text">کالاها و مشتریان را ثبت کن، در فاکتور انتخاب کن و اطلاعاتت را در همین مرورگر نگه دار.</p></section>
-<div class="workspace">
-<section class="editor panel">
-<div class="section-heading"><div><h2>اطلاعات فاکتور</h2><p>موارد را پر کن؛ نمونه‌ها قابل ویرایش‌اند.</p></div><span class="step-number">۱</span></div>
-<div class="form-section"><h3>اطلاعات فروشگاه</h3>
-<div class="field"><label for="storeName">نام فروشگاه یا کسب‌وکار</label><input id="storeName" value="فروشگاه من" placeholder="مثلاً فروشگاه بهار"></div>
-<div class="field"><label for="storePhone">شماره تماس</label><input id="storePhone" inputmode="tel" placeholder="مثلاً ۰۹۱۲۱۲۳۴۵۶۷"></div>
-<div class="field"><label for="storeAddress">نشانی فروشگاه</label><textarea id="storeAddress" rows="2" placeholder="نشانی (اختیاری)"></textarea></div></div>
-<div class="form-section"><h3>اطلاعات مشتری و فاکتور</h3>
-<div class="field"><label for="customerPicker">انتخاب مشتری ثبت‌شده</label><select id="customerPicker"><option value="">انتخاب مشتری (اختیاری)</option></select></div>
-<div class="field"><label for="customerName">نام مشتری</label><input id="customerName" placeholder="نام مشتری"></div>
-<div class="field"><label for="customerPhone">شماره تماس مشتری</label><input id="customerPhone" inputmode="tel" placeholder="اختیاری"></div>
-<div class="two-columns"><div class="field"><label for="invoiceNumber">شماره فاکتور</label><input id="invoiceNumber" value="۱۰۰۱"></div><div class="field"><label for="invoiceDate">تاریخ</label><input id="invoiceDate" placeholder="مثلاً ۱۴۰۵/۰۸/۰۷"></div></div>
-<div class="field"><label for="currency">واحد پول</label><select id="currency"><option value="تومان">تومان</option><option value="ریال">ریال</option></select></div></div>
-<div class="form-section"><div class="items-heading"><h3>کالاها و خدمات</h3><button type="button" id="addItem" class="button button-light">＋ افزودن ردیف</button></div><div id="itemsEditor" class="items-editor"></div><p class="helper">برای هر ردیف می‌توانی کالای ثبت‌شده را انتخاب کنی یا شرح و قیمت را دستی وارد کنی.</p></div>
-<div class="form-section"><div class="field"><label for="notes">توضیحات پایانی</label><textarea id="notes" rows="3" placeholder="مثلاً: از خرید شما سپاسگزاریم."></textarea></div></div>
-<button type="button" id="downloadPng" class="button button-primary download-button">↓ دانلود تصویر فاکتور (PNG)</button><p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
-<p class="privacy-note"><strong>یادآوری:</strong> اطلاعات فقط در همین مرورگر ذخیره می‌شوند و به سرور ارسال نمی‌شوند. از بخش پشتیبان‌گیری مرتب فایل خروجی بگیر؛ اطلاعات هنوز بین دستگاه‌ها همگام نمی‌شوند.</p>
-<div class="form-section management-section">
-<div class="section-heading"><div><h2>مدیریت کالاها</h2><p>کالاها، قیمت فروش و موجودی اولیه را ثبت و مدیریت کن.</p></div><span class="step-number">۴</span></div>
-<div class="field"><label for="productSearch">جست‌وجوی کالا</label><input id="productSearch" placeholder="نام یا کد کالا"></div>
-<div class="management-form">
-<div class="field"><label for="productName">نام کالا</label><input id="productName" placeholder="مثلاً دفتر ۱۰۰ برگ"></div>
-<div class="two-columns">
-<div class="field"><label for="productCode">کد کالا (اختیاری)</label><input id="productCode" placeholder="مثلاً P-001"></div>
-<div class="field"><label for="productUnit">واحد</label><select id="productUnit"><option>عدد</option><option>بسته</option><option>کیلوگرم</option><option>گرم</option><option>متر</option><option>لیتر</option><option>ساعت</option><option>خدمت</option></select></div>
-</div>
-<div class="two-columns">
-<div class="field"><label for="productPrice">قیمت فروش</label><input id="productPrice" type="number" min="0" placeholder="۰"></div>
-<div class="field"><label for="productStock">موجودی فعلی</label><input id="productStock" type="number" min="0" placeholder="۰"></div>
-</div>
-<div class="two-columns">
-<div class="field"><label for="productMinStock">هشدار موجودی در حد</label><input id="productMinStock" type="number" min="0" placeholder="مثلاً ۵"></div>
-<div class="field"><label for="productNote">توضیح (اختیاری)</label><input id="productNote" placeholder="رنگ، مدل و..."></div>
-</div>
-<div class="saved-actions"><button type="button" id="saveProduct" class="button button-primary">ثبت کالا</button><button type="button" id="cancelProductEdit" class="button button-light" hidden>لغو ویرایش</button></div>
-<p id="productStatus" class="status-message" role="status"></p>
-</div>
-<div id="productsList" class="records-list"></div>
-</div>
-<div class="form-section management-section">
-<div class="section-heading"><div><h2>مدیریت مشتریان</h2><p>مشخصات مشتریان را یک بار ثبت کن و در فاکتور انتخاب کن.</p></div><span class="step-number">۵</span></div>
-<div class="management-form">
-<div class="field"><label for="customerRecordName">نام مشتری</label><input id="customerRecordName" placeholder="نام و نام خانوادگی یا شرکت"></div>
-<div class="two-columns">
-<div class="field"><label for="customerRecordPhone">شماره تماس</label><input id="customerRecordPhone" inputmode="tel" placeholder="شماره تماس"></div>
-<div class="field"><label for="customerRecordEmail">ایمیل (اختیاری)</label><input id="customerRecordEmail" type="email" placeholder="ایمیل"></div>
-</div>
-<div class="field"><label for="customerRecordAddress">نشانی (اختیاری)</label><textarea id="customerRecordAddress" rows="2" placeholder="نشانی مشتری"></textarea></div>
-<div class="saved-actions"><button type="button" id="saveCustomer" class="button button-primary">ثبت مشتری</button><button type="button" id="cancelCustomerEdit" class="button button-light" hidden>لغو ویرایش</button></div>
-<p id="customerStatus" class="status-message" role="status"></p>
-</div>
-<div class="field"><label for="customerSearch">جست‌وجوی مشتری</label><input id="customerSearch" placeholder="نام یا شماره تماس"></div>
-<div id="customersList" class="records-list"></div>
-</div>
-<div class="form-section data-tools">
-<div class="section-heading"><div><h2>پشتیبان‌گیری اطلاعات</h2><p>یک نسخه از کالاها، مشتریان و فاکتورها در فایل ذخیره کن.</p></div><span class="step-number">۶</span></div>
-<div class="saved-actions"><button type="button" id="exportData" class="button button-light">خروجی پشتیبان (JSON)</button><label class="button button-light import-label" for="importData">بازیابی از فایل</label><input id="importData" type="file" accept=".json,application/json" hidden></div>
-<p id="backupStatus" class="status-message" role="status"></p>
-<p class="helper">فایل پشتیبان را در جای امن نگه دار. بازیابی، اطلاعات فعلی این مرورگر را با اطلاعات فایل جایگزین می‌کند.</p>
-</div>
-<div class="form-section saved-section">
-<div class="section-heading"><div><h2>فاکتورهای ذخیره‌شده</h2><p>فاکتورهای این مرورگر را ببین، باز کن یا حذف کن.</p></div><span class="step-number">۳</span></div>
-<div class="saved-actions"><button type="button" id="saveInvoice" class="button button-primary">ذخیرهٔ این فاکتور</button><button type="button" id="newInvoice" class="button button-light">فاکتور جدید</button></div>
-<p id="savedStatus" class="status-message" role="status" aria-live="polite"></p>
-<div id="savedInvoices" class="saved-invoices"><p class="helper">هنوز فاکتوری ذخیره نشده است.</p></div>
-</div>
-</section>
-<section class="preview-column"><div class="preview-label"><div><span class="step-number">۲</span><strong>پیش‌نمایش فاکتور</strong></div><span class="live-indicator"><span></span> به‌روزرسانی زنده</span></div>
-<article id="invoicePreview" class="invoice">
-<div class="invoice-top"><div><div class="invoice-kicker">فاکتور فروش</div><h2 id="previewStoreName">فروشگاه من</h2><p id="previewStoreAddress" class="muted"></p><p id="previewStorePhone" class="muted"></p></div><div class="invoice-symbol">ف</div></div>
-<div class="invoice-meta"><div><span>شماره فاکتور</span><strong id="previewInvoiceNumber">۱۰۰۱</strong></div><div><span>تاریخ</span><strong id="previewInvoiceDate">—</strong></div></div>
-<div class="customer-block"><span class="small-label">صورتحساب برای</span><strong id="previewCustomerName">مشتری گرامی</strong><span id="previewCustomerPhone" class="muted"></span></div>
-<div class="table-wrap"><table class="invoice-table"><thead><tr><th>شرح کالا / خدمات</th><th>تعداد</th><th>قیمت واحد</th><th>مبلغ</th></tr></thead><tbody id="previewItems"></tbody></table></div>
-<div class="total-area"><div class="total-line grand-total"><span>مبلغ قابل پرداخت</span><strong><span id="previewTotal">۰</span> <small id="previewCurrency">تومان</small></strong></div></div>
-<div id="previewNotesBlock" class="invoice-notes"><span class="small-label">توضیحات</span><p id="previewNotes">از خرید شما سپاسگزاریم.</p></div>
-<div class="invoice-footer"><span>از اعتماد شما سپاسگزاریم</span><span>فروش‌نامه</span></div>
-</article><p class="preview-tip">✦ این تصویر برای اشتراک‌گذاری مناسب است. خروجی PDF را در مراحل بعدی اضافه می‌کنیم.</p>
-</section></div><footer class="site-footer">فروش‌نامه — نسخهٔ آغازین و آزمایشی</footer></main>
-</body></html>
+    <div class="app-container">
+        <!-- منوی ناوبری بین بخش‌ها -->
+        <header class="app-header no-print">
+            <div class="logo-area">
+                <img src="logo-forushnameh.png" alt="لوگو" class="logo">
+                <h1>نرم‌افزار فروش و حسابداری</h1>
+            </div>
+            <nav class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('invoice-section')">صدور فاکتور</button>
+                <button class="tab-btn" onclick="switchTab('reports-section')">گزارش فروش</button>
+                <button class="tab-btn" onclick="switchTab('products-section')">مدیریت کالاها</button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- بخش اول: صدور فاکتور -->
+            <section id="invoice-section" class="content-section active">
+                <div class="invoice-box" id="invoice-printable-area">
+                    <div class="invoice-header">
+                        <div class="shop-info">
+                            <h2>فاکتور فروش</h2>
+                            <p>تاریخ: <span id="current-date"></span></p>
+                            <p>شماره فاکتور: <span id="invoice-number">1001</span></p>
+                        </div>
+                        <div class="customer-info-box">
+                            <input type="text" id="customer-name" placeholder="نام مشتری / خریدار" class="form-input">
+                        </div>
+                    </div>
+
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th>ردیف</th>
+                                <th>نام کالا / خدمات</th>
+                                <th>تعداد</th>
+                                <th>قیمت واحد (تومان)</th>
+                                <th>جمع (تومان)</th>
+                                <th class="no-print">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoice-items-list">
+                            <!-- اقلام فاکتور به صورت دینامیک اضافه می‌شوند -->
+                        </tbody>
+                    </table>
+
+                    <div class="invoice-actions no-print">
+                        <button type="button" class="btn secondary-btn" onclick="addInvoiceItem()">+ افزودن سطر جدید</button>
+                    </div>
+
+                    <div class="invoice-summary">
+                        <div class="summary-row">
+                            <span>مبلغ کل:</span>
+                            <span id="sub-total">0</span> تومان
+                        </div>
+                        <div class="summary-row">
+                            <span>تخفیف:</span>
+                            <input type="number" id="discount-amount" value="0" oninput="calculateTotal()" class="small-input"> تومان
+                        </div>
+                        <div class="summary-row final-total">
+                            <span>مبلغ قابل پرداخت:</span>
+                            <span id="final-total">0</span> تومان
+                        </div>
+                    </div>
+                </div>
+
+                <!-- دکمه‌های عملیاتی فاکتور -->
+                <div class="action-buttons no-print">
+                    <button class="btn primary-btn" onclick="saveAndPrintInvoice()">ذخیره و چاپ فاکتور (PDF)</button>
+                    <button class="btn accent-btn" onclick="resetInvoice()">فاکتور جدید</button>
+                </div>
+            </section>
+
+            <!-- بخش دوم: گزارش فروش -->
+            <section id="reports-section" class="content-section">
+                <h2>گزارش و تاریخچه فروش</h2>
+                <div class="stats-cards">
+                    <div class="card">
+                        <h3>فروش کل</h3>
+                        <p id="total-sales-amount">0 تومان</p>
+                    </div>
+                    <div class="card">
+                        <h3>تعداد فاکتورها</h3>
+                        <p id="total-invoices-count">0</p>
+                    </div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>شماره</th>
+                            <th>تاریخ</th>
+                            <th>مشتری</th>
+                            <th>مبلغ کل (تومان)</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reports-list">
+                        <!-- لیست فاکتورهای ذخیره شده -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- بخش سوم: مدیریت کالاها -->
+            <section id="products-section" class="content-section">
+                <h2>مدیریت کالاها و خدمات</h2>
+                <div class="form-inline">
+                    <input type="text" id="new-prod-name" placeholder="نام کالا" class="form-input">
+                    <input type="number" id="new-prod-price" placeholder="قیمت پیش‌فرض (تومان)" class="form-input">
+                    <button class="btn primary-btn" onclick="addProduct()">افزودن کالا</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>نام کالا</th>
+                            <th>قیمت (تومان)</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-list">
+                        <!-- لیست کالاها -->
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
