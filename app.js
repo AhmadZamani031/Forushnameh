@@ -62,7 +62,7 @@ function receiveStock(){
  if(qty<=0){$("stockStatus").textContent="تعداد ورود باید بیشتر از صفر باشد.";return}
  p.stock=num(p.stock)+qty; movement("in",id,qty,desc,"");
  if(write(KEYS.products,products,"stockStatus")&&write(KEYS.movements,movements,"stockStatus")){
-  $("stockQuantity").value="";$("stockDescription").value="";$("stockStatus").textContent="ورود کالا ثبت شد و موجودی افزایش یافت.";drawProductList();drawMovements();
+  $("stockQuantity").value="";$("stockDescription").value="";$("stockStatus").textContent="ورود کالا ثبت شد و موجودی افزایش یافت.";drawProductList();drawMovements();drawDashboard();
  }
 }
 function drawStockPicker(){
@@ -92,7 +92,7 @@ function saveInvoice(){
  if(!write(KEYS.products,products,"savedStatus")){products=previousProducts;return}
  if(!write(KEYS.invoices,list,"savedStatus")){products=previousProducts;write(KEYS.products,products,"savedStatus");$("savedStatus").textContent="ذخیره فاکتور ناموفق بود؛ موجودی قبلی بازگردانده شد.";return}
  write(KEYS.movements,movements,"savedStatus");
- editingInvoiceId=obj.id;if(window.showForushnamehPage)window.showForushnamehPage("saved");$("savedStatus").textContent="فاکتور ذخیره شد و موجودی کالاها به‌روزرسانی شد.";drawInvoices();drawProductList();drawStockPicker();drawMovements();
+ editingInvoiceId=obj.id;if(window.showForushnamehPage)window.showForushnamehPage("saved");$("savedStatus").textContent="فاکتور ذخیره شد و موجودی کالاها به‌روزرسانی شد.";drawInvoices();drawProductList();drawStockPicker();drawMovements();drawDashboard();
 }
 function loadInvoice(id){
  const x=read(KEYS.invoices,[]).find(a=>a.id===id);if(!x)return;
@@ -119,7 +119,7 @@ function saveProduct(){
  if(duplicate){$("productStatus").textContent="این کد کالا قبلاً ثبت شده است.";return}
  const p={id:editingProductId||`prd-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,name,code,unit:$("productUnit").value,price:num($("productPrice").value),stock:editingProductId?num(productById(editingProductId)?.stock):num($("productStock").value),minStock:num($("productMinStock").value),note:$("productNote").value.trim()};
  const i=products.findIndex(x=>x.id===p.id);if(i>=0)products[i]=p;else products.push(p);
- if(write(KEYS.products,products,"productStatus")){$("productStatus").textContent="کالا ذخیره شد.";clearProductForm();drawProductList();drawItems();drawStockPicker()}
+ if(write(KEYS.products,products,"productStatus")){$("productStatus").textContent="کالا ذخیره شد.";clearProductForm();drawProductList();drawItems();drawStockPicker();drawDashboard()}
 }
 function editProduct(id){if(window.showForushnamehPage)window.showForushnamehPage("products");const p=productById(id);if(!p)return;editingProductId=id;$("productStock").disabled=true;$("productName").value=p.name;$("productCode").value=p.code;$("productUnit").value=p.unit;$("productPrice").value=p.price;$("productStock").value=p.stock;$("productMinStock").value=p.minStock;$("productNote").value=p.note||"";$("saveProduct").textContent="ذخیرهٔ تغییرات";$("cancelProductEdit").hidden=false}
 function drawCustomerList(){
@@ -137,7 +137,7 @@ function saveCustomer(){
  const name=$("customerRecordName").value.trim();if(!name){$("customerStatus").textContent="لطفاً نام مشتری را وارد کن.";return}
  const c={id:editingCustomerId||`cus-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,name,phone:$("customerRecordPhone").value.trim(),email:$("customerRecordEmail").value.trim(),address:$("customerRecordAddress").value.trim()};
  const i=customers.findIndex(x=>x.id===c.id);if(i>=0)customers[i]=c;else customers.push(c);
- if(write(KEYS.customers,customers,"customerStatus")){$("customerStatus").textContent="مشتری ذخیره شد.";clearCustomerForm();drawCustomerList();drawCustomerPicker()}
+ if(write(KEYS.customers,customers,"customerStatus")){$("customerStatus").textContent="مشتری ذخیره شد.";clearCustomerForm();drawCustomerList();drawCustomerPicker();drawDashboard()}
 }
 function editCustomer(id){if(window.showForushnamehPage)window.showForushnamehPage("customers");const c=customers.find(x=>x.id===id);if(!c)return;editingCustomerId=id;$("customerRecordName").value=c.name;$("customerRecordPhone").value=c.phone;$("customerRecordEmail").value=c.email;$("customerRecordAddress").value=c.address;$("saveCustomer").textContent="ذخیرهٔ تغییرات";$("cancelCustomerEdit").hidden=false}
 function backupExport(){
@@ -151,10 +151,37 @@ async function backupImport(file){
   const x=JSON.parse(await file.text());
   if(x.app!=="ForushNameh"||!Array.isArray(x.invoices)||!Array.isArray(x.products)||!Array.isArray(x.customers))throw Error("invalid");
   if(!confirm("بازیابی، فاکتورها، کالاها و مشتریان فعلی این مرورگر را جایگزین می‌کند. ادامه می‌دهی؟"))return;
-  const restoredMovements=Array.isArray(x.movements)?x.movements:[];const ok1=write(KEYS.invoices,x.invoices,"backupStatus"),ok2=write(KEYS.products,x.products,"backupStatus"),ok3=write(KEYS.customers,x.customers,"backupStatus"),ok4=write(KEYS.movements,restoredMovements,"backupStatus");
-  if(ok1&&ok2&&ok3&&ok4){products=x.products;customers=x.customers;movements=restoredMovements;drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawItems();drawStockPicker();drawMovements();$("backupStatus").textContent="بازیابی اطلاعات انجام شد."}
+  const restoredMovements=Array.isArray(x.movements)?x.movements:[];
+  const keys=[KEYS.invoices,KEYS.products,KEYS.customers,KEYS.movements],before=keys.map(k=>localStorage.getItem(k));
+  try{
+   const values=[x.invoices,x.products,x.customers,restoredMovements];
+   keys.forEach((k,i)=>localStorage.setItem(k,JSON.stringify(values[i])));
+   products=x.products;customers=x.customers;movements=restoredMovements;
+   drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawItems();drawDashboard();
+   $("backupStatus").textContent="بازیابی اطلاعات انجام شد.";
+  }catch(storageError){
+   keys.forEach((k,i)=>{if(before[i]===null)localStorage.removeItem(k);else localStorage.setItem(k,before[i])});
+   $("backupStatus").textContent="ذخیرهٔ پشتیبان کامل نشد؛ اطلاعات قبلی حفظ شدند. فضای ذخیره‌سازی مرورگر را بررسی کن.";
+  }
  }catch(e){$("backupStatus").textContent="فایل انتخاب‌شده معتبر نیست یا قابل خواندن نیست."}
  $("importData").value="";
+}
+
+
+function drawDashboard(){
+ const invoices=read(KEYS.invoices,[]).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+ const sales=invoices.reduce((sum,x)=>sum+total(x.items||[]),0);
+ $("dashSales").textContent=fa(sales);
+ $("dashSalesCurrency").textContent=invoices[0]?.data?.currency||"تومان";
+ $("dashInvoices").textContent=fa(invoices.length);
+ $("dashCustomers").textContent=fa(customers.length);
+ $("dashProducts").textContent=fa(products.length);
+ const low=products.filter(p=>num(p.stock)<=num(p.minStock));
+ $("dashLowStock").textContent=`${fa(low.length)} کالای کم‌موجود`;
+ const recent=$("dashRecentInvoices");
+ recent.innerHTML=invoices.length?invoices.slice(0,5).map(x=>`<div class="dash-row"><div><strong>${esc(x.data?.customerName||"بدون نام مشتری")}</strong><small>فاکتور ${esc(x.data?.invoiceNumber||"—")} · ${esc(x.data?.invoiceDate||"بدون تاریخ")}</small></div><b>${fa(total(x.items||[]))} ${esc(x.data?.currency||"تومان")}</b></div>`).join(""):'<p class="helper">هنوز فاکتوری ثبت نشده است.</p>';
+ const lowHost=$("dashLowProducts");
+ lowHost.innerHTML=low.length?low.slice(0,6).map(p=>`<div class="dash-row"><div><strong>${esc(p.name)}</strong><small>حد هشدار: ${fa(p.minStock)} ${esc(p.unit||"")}</small></div><b class="low-stock">${fa(p.stock)} ${esc(p.unit||"")}</b></div>`).join(""):'<p class="helper">موجودی کالاها در وضعیت مناسبی است.</p>';
 }
 
 function setupNavigation(){
@@ -179,14 +206,14 @@ function init(){
  $("currency").addEventListener("change",()=>{drawItems();preview()});
  $("customerPicker").addEventListener("change",()=>{const c=customers.find(x=>x.id===$("customerPicker").value);if(c){$("customerName").value=c.name;$("customerPhone").value=c.phone;$("previewCustomerName").textContent=c.name;$("previewCustomerPhone").textContent=c.phone?`تلفن: ${c.phone}`:""}});
  $("saveInvoice").addEventListener("click",saveInvoice);$("newInvoice").addEventListener("click",newInvoice);
- $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]"),d=e.target.closest("[data-delete-invoice]");if(o){loadInvoice(o.dataset.openInvoice);return}if(d&&confirm("این فاکتور حذف شود؟ در صورت ثبت گردش انبار، موجودی کالاها نیز برگردانده می‌شود.")){const all=read(KEYS.invoices,[]),target=all.find(x=>x.id===d.dataset.deleteInvoice);if(target&&target.stockApplied&&Array.isArray(target.stockEffects)){target.stockEffects.forEach(e=>{const p=productById(e.productId);if(p){p.stock=num(p.stock)+num(e.quantity);movement("return",e.productId,e.quantity,`حذف فاکتور ${target.data.invoiceNumber}`,target.data.invoiceNumber)}});write(KEYS.products,products,"savedStatus");write(KEYS.movements,movements,"savedStatus")}write(KEYS.invoices,all.filter(x=>x.id!==d.dataset.deleteInvoice),"savedStatus");drawInvoices();drawProductList();drawStockPicker();drawMovements()}});
+ $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]"),d=e.target.closest("[data-delete-invoice]");if(o){loadInvoice(o.dataset.openInvoice);return}if(d&&confirm("این فاکتور حذف شود؟ در صورت ثبت گردش انبار، موجودی کالاها نیز برگردانده می‌شود.")){const all=read(KEYS.invoices,[]),target=all.find(x=>x.id===d.dataset.deleteInvoice);if(target&&target.stockApplied&&Array.isArray(target.stockEffects)){target.stockEffects.forEach(e=>{const p=productById(e.productId);if(p){p.stock=num(p.stock)+num(e.quantity);movement("return",e.productId,e.quantity,`حذف فاکتور ${target.data.invoiceNumber}`,target.data.invoiceNumber)}});write(KEYS.products,products,"savedStatus");write(KEYS.movements,movements,"savedStatus")}write(KEYS.invoices,all.filter(x=>x.id!==d.dataset.deleteInvoice),"savedStatus");drawInvoices();drawProductList();drawStockPicker();drawMovements();drawDashboard()}});
  $("saveProduct").addEventListener("click",saveProduct);$("cancelProductEdit").addEventListener("click",clearProductForm);$("productSearch").addEventListener("input",drawProductList);
- $("productsList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-product]"),del=e.target.closest("[data-delete-product]");if(edit){editProduct(edit.dataset.editProduct);return}if(del&&confirm("این کالا حذف شود؟ فاکتورهای قبلی تغییر نمی‌کنند.")){products=products.filter(p=>p.id!==del.dataset.deleteProduct);write(KEYS.products,products,"productStatus");drawProductList();drawItems();drawStockPicker()}});
+ $("productsList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-product]"),del=e.target.closest("[data-delete-product]");if(edit){editProduct(edit.dataset.editProduct);return}if(del&&confirm("این کالا حذف شود؟ فاکتورهای قبلی تغییر نمی‌کنند.")){products=products.filter(p=>p.id!==del.dataset.deleteProduct);write(KEYS.products,products,"productStatus");drawProductList();drawItems();drawStockPicker();drawDashboard()}});
  $("saveCustomer").addEventListener("click",saveCustomer);$("cancelCustomerEdit").addEventListener("click",clearCustomerForm);$("customerSearch").addEventListener("input",drawCustomerList);
- $("customersList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-customer]"),del=e.target.closest("[data-delete-customer]");if(edit){editCustomer(edit.dataset.editCustomer);return}if(del&&confirm("این مشتری حذف شود؟ فاکتورهای قبلی تغییر نمی‌کنند.")){customers=customers.filter(c=>c.id!==del.dataset.deleteCustomer);write(KEYS.customers,customers,"customerStatus");drawCustomerList();drawCustomerPicker()}});
+ $("customersList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-customer]"),del=e.target.closest("[data-delete-customer]");if(edit){editCustomer(edit.dataset.editCustomer);return}if(del&&confirm("این مشتری حذف شود؟ فاکتورهای قبلی تغییر نمی‌کنند.")){customers=customers.filter(c=>c.id!==del.dataset.deleteCustomer);write(KEYS.customers,customers,"customerStatus");drawCustomerList();drawCustomerPicker();drawDashboard()}});
  $("receiveStock").addEventListener("click",receiveStock);$("exportData").addEventListener("click",backupExport);$("importData").addEventListener("change",e=>backupImport(e.target.files[0]));
  $("downloadPng").addEventListener("click",async()=>{const btn=$("downloadPng"),status=$("statusMessage");if(typeof window.html2canvas!=="function"){status.textContent="ابزار ساخت تصویر بارگذاری نشده است؛ اتصال اینترنت را بررسی کن.";return}btn.disabled=true;status.textContent="در حال آماده‌سازی تصویر فاکتور…";try{const canvas=await window.html2canvas($("invoicePreview"),{scale:2,backgroundColor:"#fff",useCORS:true,logging:false}),a=document.createElement("a"),n=($("invoiceNumber").value.trim()||"new").replace(/[^\w\u0600-\u06FF-]/g,"_");a.download=`ForushNameh-invoice-${n}.png`;a.href=canvas.toDataURL("image/png");a.click();status.textContent="تصویر فاکتور آماده شد."}catch(e){status.textContent="ساخت تصویر انجام نشد؛ صفحه را تازه‌سازی و دوباره امتحان کن."}finally{btn.disabled=false}});
- drawItems();preview();drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();
+ drawItems();preview();drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawDashboard();drawDashboard();
 }
 init();
 })();
