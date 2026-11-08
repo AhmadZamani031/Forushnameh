@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="fa">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="#103b86" name="theme-color"/><title>Forushnameh | مدیریت کسب‌وکار</title>
+<link href="styles.css" rel="stylesheet"/>
+<script defer="" src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script defer="" src="app.js"></script>
+<meta content="Forushnameh؛ مدیریت فاکتور، کالا، مشتری و موجودی" name="description"/></head>
+<body>
+<header class="topbar"><div class="brand-lockup"><img alt="Forushnameh" class="brand-logo" src="logo-forushnameh.png"/></div><span class="version">نسخهٔ ۵ آزمایشی</span></header>
+<main class="page"><section class="intro"><p class="eyebrow">FORUSHNAMEH</p><h1>مدیریت کسب‌وکارت، ساده و یکپارچه</h1><p class="intro-text">از اینجا می‌توانی فاکتور صادر کنی، کالاها و مشتریان را مدیریت کنی و موجودی انبار را زیر نظر داشته باشی.</p></section><nav aria-label="بخش‌های برنامه" class="main-nav"><button aria-current="page" class="nav-item active" data-page="invoice" type="button">صدور فاکتور</button><button aria-current="false" class="nav-item" data-page="products" type="button">کالاها و انبار</button><button aria-current="false" class="nav-item" data-page="customers" type="button">مشتریان</button><button aria-current="false" class="nav-item" data-page="saved" type="button">فاکتورهای ذخیره‌شده</button><button aria-current="false" class="nav-item" data-page="backup" type="button">پشتیبان‌گیری</button></nav><section class="app-view active-view" data-view="invoice"><div class="view-heading"><h2>صدور فاکتور</h2><p>اطلاعات را وارد کن و پیش‌نمایش فاکتور را در کنار فرم ببین.</p></div><div class="workspace"><section class="editor panel"><div class="section-heading"><div><h2>اطلاعات فاکتور</h2><p>موارد را پر کن؛ نمونه‌ها قابل ویرایش‌اند.</p></div><span class="step-number">۱</span></div><div class="form-section"><h3>اطلاعات فروشگاه</h3>
+<div class="field"><label for="storeName">نام فروشگاه یا کسب‌وکار</label><input id="storeName" placeholder="مثلاً فروشگاه بهار" value="فروشگاه من"/></div>
+<div class="field"><label for="storePhone">شماره تماس</label><input id="storePhone" inputmode="tel" placeholder="مثلاً ۰۹۱۲۱۲۳۴۵۶۷"/></div>
+<div class="field"><label for="storeAddress">نشانی فروشگاه</label><textarea id="storeAddress" placeholder="نشانی (اختیاری)" rows="2"></textarea></div></div><div class="form-section"><h3>اطلاعات مشتری و فاکتور</h3>
+<div class="field"><label for="customerPicker">انتخاب مشتری ثبت‌شده</label><select id="customerPicker"><option value="">انتخاب مشتری (اختیاری)</option></select></div>
+<div class="field"><label for="customerName">نام مشتری</label><input id="customerName" placeholder="نام مشتری"/></div>
+<div class="field"><label for="customerPhone">شماره تماس مشتری</label><input id="customerPhone" inputmode="tel" placeholder="اختیاری"/></div>
+<div class="two-columns"><div class="field"><label for="invoiceNumber">شماره فاکتور</label><input id="invoiceNumber" value="۱۰۰۱"/></div><div class="field"><label for="invoiceDate">تاریخ</label><input id="invoiceDate" placeholder="مثلاً ۱۴۰۵/۰۸/۰۷"/></div></div>
+<div class="field"><label for="currency">واحد پول</label><select id="currency"><option value="تومان">تومان</option><option value="ریال">ریال</option></select></div></div><div class="form-section"><div class="items-heading"><h3>کالاها و خدمات</h3><button class="button button-light" id="addItem" type="button">＋ افزودن ردیف</button></div><div class="items-editor" id="itemsEditor"></div><p class="helper">برای هر ردیف می‌توانی کالای ثبت‌شده را انتخاب کنی یا شرح و قیمت را دستی وارد کنی.</p></div><div class="form-section"><div class="field"><label for="notes">توضیحات پایانی</label><textarea id="notes" placeholder="مثلاً: از خرید شما سپاسگزاریم." rows="3"></textarea></div></div><button class="button button-primary download-button" id="downloadPng" type="button">↓ دانلود تصویر فاکتور (PNG)</button><p aria-live="polite" class="status-message" id="statusMessage" role="status"></p><p class="privacy-note"><strong>یادآوری:</strong> اطلاعات فقط در همین مرورگر ذخیره می‌شوند و به سرور ارسال نمی‌شوند. از بخش پشتیبان‌گیری مرتب فایل خروجی بگیر؛ اطلاعات هنوز بین دستگاه‌ها همگام نمی‌شوند.</p></section><section class="preview-column"><div class="preview-label"><div><span class="step-number">۲</span><strong>پیش‌نمایش فاکتور</strong></div><span class="live-indicator"><span></span> به‌روزرسانی زنده</span></div>
+<article class="invoice" id="invoicePreview">
+<div class="invoice-top"><div><div class="invoice-kicker">فاکتور فروش</div><h2 id="previewStoreName">فروشگاه من</h2><p class="muted" id="previewStoreAddress"></p><p class="muted" id="previewStorePhone"></p></div><div class="invoice-symbol">ف</div></div>
+<div class="invoice-meta"><div><span>شماره فاکتور</span><strong id="previewInvoiceNumber">۱۰۰۱</strong></div><div><span>تاریخ</span><strong id="previewInvoiceDate">—</strong></div></div>
+<div class="customer-block"><span class="small-label">صورتحساب برای</span><strong id="previewCustomerName">مشتری گرامی</strong><span class="muted" id="previewCustomerPhone"></span></div>
+<div class="table-wrap"><table class="invoice-table"><thead><tr><th>شرح کالا / خدمات</th><th>تعداد</th><th>قیمت واحد</th><th>مبلغ</th></tr></thead><tbody id="previewItems"></tbody></table></div>
+<div class="total-area"><div class="total-line grand-total"><span>مبلغ قابل پرداخت</span><strong><span id="previewTotal">۰</span> <small id="previewCurrency">تومان</small></strong></div></div>
+<div class="invoice-notes" id="previewNotesBlock"><span class="small-label">توضیحات</span><p id="previewNotes">از خرید شما سپاسگزاریم.</p></div>
+<div class="invoice-footer"><span>از اعتماد شما سپاسگزاریم</span><span>فروش‌نامه</span></div>
+</article><p class="preview-tip">✦ این تصویر برای اشتراک‌گذاری مناسب است. خروجی PDF را در مراحل بعدی اضافه می‌کنیم.</p>
+</section></div></section><section class="app-view" data-view="products"><div class="view-heading"><h2>مدیریت کالاها و انبار</h2><p>کالاها را ثبت کن، موجودی را کنترل کن و ورود و خروج‌ها را پیگیری کن.</p></div><section class="panel page-panel"><div class="form-section management-section">
+<div class="section-heading"><div><h2>مدیریت کالاها</h2><p>کالاها و قیمت فروش را مدیریت کن؛ موجودی با فاکتور و ورود انبار به‌روزرسانی می‌شود.</p></div><span class="step-number">۴</span></div>
+<div class="field"><label for="productSearch">جست‌وجوی کالا</label><input id="productSearch" placeholder="نام یا کد کالا"/></div>
+<div class="management-form">
+<div class="field"><label for="productName">نام کالا</label><input id="productName" placeholder="مثلاً دفتر ۱۰۰ برگ"/></div>
+<div class="two-columns">
+<div class="field"><label for="productCode">کد کالا (اختیاری)</label><input id="productCode" placeholder="مثلاً P-001"/></div>
+<div class="field"><label for="productUnit">واحد</label><select id="productUnit"><option>عدد</option><option>بسته</option><option>کیلوگرم</option><option>گرم</option><option>متر</option><option>لیتر</option><option>ساعت</option><option>خدمت</option></select></div>
+</div>
+<div class="two-columns">
+<div class="field"><label for="productPrice">قیمت فروش</label><input id="productPrice" min="0" placeholder="۰" type="number"/></div>
+<div class="field"><label for="productStock">موجودی فعلی (در ویرایش فقط‌خواندنی)</label><input id="productStock" min="0" placeholder="۰" type="number"/></div>
+</div>
+<div class="two-columns">
+<div class="field"><label for="productMinStock">هشدار موجودی در حد</label><input id="productMinStock" min="0" placeholder="مثلاً ۵" type="number"/></div>
+<div class="field"><label for="productNote">توضیح (اختیاری)</label><input id="productNote" placeholder="رنگ، مدل و..."/></div>
+</div>
+<div class="saved-actions"><button class="button button-primary" id="saveProduct" type="button">ثبت کالا</button><button class="button button-light" hidden="" id="cancelProductEdit" type="button">لغو ویرایش</button></div>
+<p class="status-message" id="productStatus" role="status"></p>
+</div>
+<div class="records-list" id="productsList"></div>
+</div><div class="form-section management-section">
+<div class="section-heading"><div><h2>ورود کالا به انبار</h2><p>برای خرید جدید یا تأمین مجدد، تعداد کالا را ثبت کن.</p></div><span class="step-number">۵</span></div>
+<div class="management-form">
+<div class="field"><label for="stockProduct">کالا</label><select id="stockProduct"><option value="">انتخاب کالا</option></select></div>
+<div class="two-columns"><div class="field"><label for="stockQuantity">تعداد ورودی</label><input id="stockQuantity" min="1" placeholder="مثلاً ۲۰" type="number"/></div><div class="field"><label for="stockDescription">توضیح (اختیاری)</label><input id="stockDescription" placeholder="مثلاً خرید از تأمین‌کننده"/></div></div>
+<button class="button button-primary" id="receiveStock" type="button">ثبت ورود کالا</button><p class="status-message" id="stockStatus" role="status"></p>
+</div>
+<h3>تاریخچهٔ گردش انبار</h3><p class="helper">آخرین ۱۰۰ رویداد ورود، فروش و برگشت نمایش داده می‌شود.</p><div class="records-list" id="movementsList"></div>
+</div></section></section><section class="app-view" data-view="customers"><div class="view-heading"><h2>مدیریت مشتریان</h2><p>اطلاعات مشتریان را یک‌بار ثبت کن و هنگام صدور فاکتور انتخاب کن.</p></div><section class="panel page-panel"><div class="form-section management-section">
+<div class="section-heading"><div><h2>مدیریت مشتریان</h2><p>مشخصات مشتریان را یک بار ثبت کن و در فاکتور انتخاب کن.</p></div><span class="step-number">۵</span></div>
+<div class="management-form">
+<div class="field"><label for="customerRecordName">نام مشتری</label><input id="customerRecordName" placeholder="نام و نام خانوادگی یا شرکت"/></div>
+<div class="two-columns">
+<div class="field"><label for="customerRecordPhone">شماره تماس</label><input id="customerRecordPhone" inputmode="tel" placeholder="شماره تماس"/></div>
+<div class="field"><label for="customerRecordEmail">ایمیل (اختیاری)</label><input id="customerRecordEmail" placeholder="ایمیل" type="email"/></div>
+</div>
+<div class="field"><label for="customerRecordAddress">نشانی (اختیاری)</label><textarea id="customerRecordAddress" placeholder="نشانی مشتری" rows="2"></textarea></div>
+<div class="saved-actions"><button class="button button-primary" id="saveCustomer" type="button">ثبت مشتری</button><button class="button button-light" hidden="" id="cancelCustomerEdit" type="button">لغو ویرایش</button></div>
+<p class="status-message" id="customerStatus" role="status"></p>
+</div>
+<div class="field"><label for="customerSearch">جست‌وجوی مشتری</label><input id="customerSearch" placeholder="نام یا شماره تماس"/></div>
+<div class="records-list" id="customersList"></div>
+</div></section></section><section class="app-view" data-view="saved"><div class="view-heading"><h2>فاکتورهای ذخیره‌شده</h2><p>فاکتورهای قبلی را باز کن، ویرایش کن یا حذف کن.</p></div><section class="panel page-panel"><div class="form-section saved-section">
+<div class="section-heading"><div><h2>فاکتورهای ذخیره‌شده</h2><p>فاکتورهای این مرورگر را ببین، باز کن یا حذف کن؛ حذف فاکتورهای جدید، موجودی را برمی‌گرداند.</p></div><span class="step-number">۳</span></div>
+<div class="saved-actions"><button class="button button-primary" id="saveInvoice" type="button">ذخیرهٔ این فاکتور</button><button class="button button-light" id="newInvoice" type="button">فاکتور جدید</button></div>
+<p aria-live="polite" class="status-message" id="savedStatus" role="status"></p>
+<div class="saved-invoices" id="savedInvoices"><p class="helper">هنوز فاکتوری ذخیره نشده است.</p></div>
+</div></section></section><section class="app-view" data-view="backup"><div class="view-heading"><h2>پشتیبان‌گیری و بازیابی</h2><p>برای نگهداری امن اطلاعات، مرتباً فایل پشتیبان تهیه کن.</p></div><section class="panel page-panel"><div class="form-section data-tools">
+<div class="section-heading"><div><h2>پشتیبان‌گیری اطلاعات</h2><p>یک نسخه از کالاها، مشتریان و فاکتورها در فایل ذخیره کن.</p></div><span class="step-number">۶</span></div>
+<div class="saved-actions"><button class="button button-light" id="exportData" type="button">خروجی پشتیبان (JSON)</button><label class="button button-light import-label" for="importData">بازیابی از فایل</label><input accept=".json,application/json" hidden="" id="importData" type="file"/></div>
+<p class="status-message" id="backupStatus" role="status"></p>
+<p class="helper">فایل پشتیبان را در جای امن نگه دار. بازیابی، اطلاعات فعلی این مرورگر را با اطلاعات فایل جایگزین می‌کند.</p>
+</div></section></section><footer class="site-footer">Forushnameh · نسخهٔ ۵ آزمایشی</footer></main>
+</body></html>
