@@ -20,7 +20,15 @@ function num(v){const s=String(v??"").replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸�
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function invoiceData(){return Object.fromEntries(invoiceFields.map(id=>[id,$(id).value.trim()]))}
 function total(list=items){return list.reduce((s,it)=>s+num(it.quantity)*num(it.price),0)}
-function today(){const d=new Date();return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`}
+const persianCalendarFormatter=new Intl.DateTimeFormat("en-US-u-ca-persian-nu-latn",{year:"numeric",month:"2-digit",day:"2-digit",timeZone:"UTC"});
+const jalaliYearCache=new Map();
+function normalizeDigits(value){return String(value??"").replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[.\-]/g,"/").trim()}
+function persianDateParts(date){const parts=persianCalendarFormatter.formatToParts(date),get=t=>Number(parts.find(x=>x.type===t)?.value);return {year:get("year"),month:get("month"),day:get("day")}}
+function toPersianDigits(value){return String(value).replace(/\d/g,d=>"۰۱۲۳۴۵۶۷۸۹"[Number(d)])}
+function formatJalaliDate(iso){if(!iso)return "";const m=String(iso).slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return String(iso);const p=persianDateParts(new Date(Date.UTC(+m[1],+m[2]-1,+m[3],12)));return toPersianDigits(p.year+"/"+String(p.month).padStart(2,"0")+"/"+String(p.day).padStart(2,"0"))}
+function jalaliYearMap(jy){if(jalaliYearCache.has(jy))return jalaliYearCache.get(jy);const map=new Map(),start=Date.UTC(jy+621,2,19,12),end=Date.UTC(jy+622,2,23,12);for(let t=start;t<=end;t+=86400000){const d=new Date(t),p=persianDateParts(d);if(p.year===jy)map.set(p.month+"/"+p.day,d.toISOString().slice(0,10))}jalaliYearCache.set(jy,map);return map}
+function jalaliToGregorian(value){const raw=normalizeDigits(value),m=raw.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);if(!m)return null;const y=+m[1],month=+m[2],day=+m[3];if(month<1||month>12||day<1||day>31)return null;return jalaliYearMap(y).get(month+"/"+day)||null}
+function today(){const p=persianDateParts(new Date());return toPersianDigits(p.year+"/"+String(p.month).padStart(2,"0")+"/"+String(p.day).padStart(2,"0"))}
 if(!$("invoiceDate").value)$("invoiceDate").value=today();
 function productById(id){return products.find(p=>p.id===id)}
 function mapCloudProduct(row){return {id:row.id,name:row.name,code:row.sku||"",unit:row.unit||"عدد",price:Number(row.sale_price)||0,stock:Number(row.stock_on_hand)||0,minStock:Number(row.min_stock)||0,note:row.note||"",isActive:row.is_active!==false}}
@@ -82,7 +90,7 @@ async function loadCloudInvoices(requestedUserId=currentUser?.id){
  }
  const grouped=new Map();
  itemRows.forEach(row=>{if(!grouped.has(row.invoice_id))grouped.set(row.invoice_id,[]);grouped.get(row.invoice_id).push({id:row.id,name:row.description||"",quantity:Number(row.quantity)||0,price:Number(row.unit_price)||0,productId:row.product_id||"",unit:row.unit||"عدد"})});
- cloudInvoices=rows.map(row=>({id:row.id,status:row.status,totalAmount:Number(row.total_amount)||0,data:{invoiceNumber:row.invoice_number||"",invoiceDate:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",discountAmount:String(Number(row.discount_amount)||0),taxAmount:String(Number(row.tax_amount)||0),notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at}));
+ cloudInvoices=rows.map(row=>({id:row.id,status:row.status,totalAmount:Number(row.total_amount)||0,data:{invoiceNumber:row.invoice_number||"",invoiceDate:formatJalaliDate(row.invoice_date),invoiceDateISO:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",discountAmount:String(Number(row.discount_amount)||0),taxAmount:String(Number(row.tax_amount)||0),notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at}));
  drawInvoices();return true;
 }
 
@@ -204,14 +212,13 @@ async function saveInvoice(){
  const requestedUserId=currentUser?.id;
  if(!supabaseClient||!requestedUserId){$("savedStatus").textContent="برای صدور فاکتور ابتدا وارد حساب کاربری شو.";return}
  if(editingInvoiceId){$("savedStatus").textContent="این فاکتور قبلاً صادر شده و امکان ویرایش مستقیم آن وجود ندارد. برای صدور فاکتور تازه، «فاکتور جدید» را بزن.";return}
- const dateRaw=$("invoiceDate").value.trim().replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/\//g,"-");
- const dateParts=dateRaw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
- const validDate=!!dateParts&&(()=>{const y=Number(dateParts[1]),m=Number(dateParts[2]),d=Number(dateParts[3]),dt=new Date(Date.UTC(y,m-1,d));return dt.getUTCFullYear()===y&&dt.getUTCMonth()===m-1&&dt.getUTCDate()===d})();
- if(!validDate){$("savedStatus").textContent="تاریخ معتبر نیست؛ از قالب سال/ماه/روز میلادی استفاده کن.";return}
+ const dateRaw=normalizeDigits($("invoiceDate").value);
+ const invoiceDateISO=jalaliToGregorian(dateRaw);
+ if(!invoiceDateISO){$("savedStatus").textContent="تاریخ شمسی معتبر نیست؛ تاریخ را به‌شکل سال/ماه/روز وارد کن.";return}
  if(!items.length||items.some(it=>!String(it.name||"").trim()||num(it.quantity)<=0||num(it.price)<0)){$("savedStatus").textContent="همهٔ ردیف‌ها باید شرح، تعداد بیشتر از صفر و قیمت معتبر داشته باشند.";return}
  const subtotal=total(),discount=num($("discountAmount").value),tax=num($("taxAmount").value);
  if(discount>subtotal){$("savedStatus").textContent="مبلغ تخفیف نمی‌تواند از جمع اقلام بیشتر باشد.";return}
- const payload={customer_id:$("customerPicker").value||null,customer_name:$("customerName").value.trim(),customer_phone:$("customerPhone").value.trim(),invoice_date:dateRaw,currency:$("currency").value||"تومان",notes:$("notes").value.trim(),discount_amount:discount,tax_amount:tax,items:items.map(it=>({product_id:it.productId||null,description:String(it.name||"").trim(),unit:productById(it.productId)?.unit||"عدد",quantity:num(it.quantity),unit_price:num(it.price)}))};
+ const payload={customer_id:$("customerPicker").value||null,customer_name:$("customerName").value.trim(),customer_phone:$("customerPhone").value.trim(),invoice_date:invoiceDateISO,currency:$("currency").value||"تومان",notes:$("notes").value.trim(),discount_amount:discount,tax_amount:tax,items:items.map(it=>({product_id:it.productId||null,description:String(it.name||"").trim(),unit:productById(it.productId)?.unit||"عدد",quantity:num(it.quantity),unit_price:num(it.price)}))};
  const btn=$("saveInvoice");btn.disabled=true;$("savedStatus").textContent="در حال صدور فاکتور و بررسی موجودی در پایگاه داده…";
  try{
   const {data,error}=await supabaseClient.rpc("forushnameh_issue_invoice",{p_invoice:payload});if(error)throw error;
@@ -389,10 +396,10 @@ function drawReports(){
  currencyEl.value=currencies.includes(old)?old:(currencies.includes(businessSettings?.default_currency)?businessSettings.default_currency:(currencies[0]||""));
  const currency=currencyEl.value||businessSettings?.default_currency||currencies[0]||"تومان",all=cloudInvoices.filter(x=>x.status==="issued"&&(x.data?.currency||"تومان")===currency),now=new Date(),period=periodEl.value;
  let start=null;if(period==="month")start=new Date(now.getFullYear(),now.getMonth(),1);else if(period==="30days")start=new Date(now.getFullYear(),now.getMonth(),now.getDate()-29);else if(period==="year")start=new Date(now.getFullYear(),0,1);
- const scoped=all.filter(x=>{const d=parseInvoiceDate(x.data?.invoiceDate);return !start||(d&&d>=start&&d<=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59,999))});
+ const scoped=all.filter(x=>{const d=parseInvoiceDate(x.data?.invoiceDateISO||x.data?.invoiceDate);return !start||(d&&d>=start&&d<=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59,999))});
  const sales=scoped.reduce((a,x)=>a+(Number(x.totalAmount)||0),0);
  $("reportSales").textContent=fa(sales);$("reportInvoices").textContent=fa(scoped.length);$("reportAverage").textContent=fa(scoped.length?sales/scoped.length:0);$("reportCurrencyLabel").textContent=currency;
- const buckets=[];for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"),v=all.filter(x=>String(x.data?.invoiceDate||"").slice(0,7)===key).reduce((a,x)=>a+(Number(x.totalAmount)||0),0);buckets.push({label:d.toLocaleDateString("fa-IR",{month:"short"}),value:v})}
+ const buckets=[];for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"),v=all.filter(x=>String(x.data?.invoiceDateISO||x.data?.invoiceDate||"").slice(0,7)===key).reduce((a,x)=>a+(Number(x.totalAmount)||0),0);buckets.push({label:d.toLocaleDateString("fa-IR",{month:"short"}),value:v})}
  const max=Math.max(1,...buckets.map(x=>x.value));$("reportChart").innerHTML=buckets.map(x=>'<div class="report-bar-item"><div class="report-bar-track"><span style="height:'+Math.max(3,Math.round(x.value/max*100))+'%"></span></div><strong>'+fa(x.value)+'</strong><small>'+esc(x.label)+'</small></div>').join("");
  const cs=new Map(),ps=new Map();scoped.forEach(inv=>{const name=inv.data?.customerName||"بدون نام مشتری";cs.set(name,(cs.get(name)||0)+(Number(inv.totalAmount)||0));(inv.items||[]).forEach(it=>{const key=it.name||"بدون شرح",v=ps.get(key)||{quantity:0,revenue:0};v.quantity+=Number(it.quantity)||0;v.revenue+=(Number(it.quantity)||0)*(Number(it.price)||0);ps.set(key,v)})});
  const topC=[...cs.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);$("reportTopCustomers").innerHTML=topC.length?topC.map(([n,v])=>'<div class="report-list-row"><strong>'+esc(n)+'</strong><b>'+fa(v)+'</b></div>').join(""):'<p class="helper">در این بازه فاکتوری ثبت نشده است.</p>';
