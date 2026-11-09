@@ -309,6 +309,26 @@ function drawDashboard(){
  recent.innerHTML=invoices.length?invoices.slice(0,5).map(x=>`<div class="dash-row"><div><strong>${esc(x.data?.customerName||"بدون نام مشتری")}</strong><small>فاکتور ${esc(x.data?.invoiceNumber||"—")} · ${esc(x.data?.invoiceDate||"بدون تاریخ")}</small></div><b>${fa(x.totalAmount)} ${esc(x.data?.currency||"تومان")}</b></div>`).join(""):'<p class="helper">هنوز فاکتوری ثبت نشده است.</p>';
  const lowHost=$("dashLowProducts");
  lowHost.innerHTML=low.length?low.slice(0,6).map(p=>`<div class="dash-row"><div><strong>${esc(p.name)}</strong><small>حد هشدار: ${fa(p.minStock)} ${esc(p.unit||"")}</small></div><b class="low-stock">${fa(p.stock)} ${esc(p.unit||"")}</b></div>`).join(""):'<p class="helper">موجودی کالاها در وضعیت مناسبی است.</p>';
+ drawReports();
+}
+
+function parseInvoiceDate(value){const raw=String(value||"").slice(0,10),m=raw.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);if(!m)return null;const d=new Date(+m[1],+m[2]-1,+m[3]);return Number.isNaN(d.getTime())?null:d}
+function drawReports(){
+ const periodEl=$("reportPeriod"),currencyEl=$("reportCurrency");if(!periodEl||!currencyEl)return;
+ const currencies=[...new Set(cloudInvoices.map(x=>x.data?.currency||"تومان"))].sort(),old=currencyEl.value;
+ currencyEl.innerHTML=currencies.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("");
+ currencyEl.value=currencies.includes(old)?old:(currencies.includes(businessSettings?.default_currency)?businessSettings.default_currency:(currencies[0]||""));
+ const currency=currencyEl.value||businessSettings?.default_currency||currencies[0]||"تومان",all=cloudInvoices.filter(x=>(x.data?.currency||"تومان")===currency),now=new Date(),period=periodEl.value;
+ let start=null;if(period==="month")start=new Date(now.getFullYear(),now.getMonth(),1);else if(period==="30days")start=new Date(now.getFullYear(),now.getMonth(),now.getDate()-29);else if(period==="year")start=new Date(now.getFullYear(),0,1);
+ const scoped=all.filter(x=>{const d=parseInvoiceDate(x.data?.invoiceDate);return !start||(d&&d>=start&&d<=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59,999))});
+ const sales=scoped.reduce((a,x)=>a+(Number(x.totalAmount)||0),0);
+ $("reportSales").textContent=fa(sales);$("reportInvoices").textContent=fa(scoped.length);$("reportAverage").textContent=fa(scoped.length?sales/scoped.length:0);$("reportCurrencyLabel").textContent=currency;
+ const buckets=[];for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"),v=all.filter(x=>String(x.data?.invoiceDate||"").slice(0,7)===key).reduce((a,x)=>a+(Number(x.totalAmount)||0),0);buckets.push({label:d.toLocaleDateString("fa-IR",{month:"short"}),value:v})}
+ const max=Math.max(1,...buckets.map(x=>x.value));$("reportChart").innerHTML=buckets.map(x=>'<div class="report-bar-item"><div class="report-bar-track"><span style="height:'+Math.max(3,Math.round(x.value/max*100))+'%"></span></div><strong>'+fa(x.value)+'</strong><small>'+esc(x.label)+'</small></div>').join("");
+ const cs=new Map(),ps=new Map();scoped.forEach(inv=>{const name=inv.data?.customerName||"بدون نام مشتری";cs.set(name,(cs.get(name)||0)+(Number(inv.totalAmount)||0));(inv.items||[]).forEach(it=>{const key=it.name||"بدون شرح",v=ps.get(key)||{quantity:0,revenue:0};v.quantity+=Number(it.quantity)||0;v.revenue+=(Number(it.quantity)||0)*(Number(it.price)||0);ps.set(key,v)})});
+ const topC=[...cs.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);$("reportTopCustomers").innerHTML=topC.length?topC.map(([n,v])=>'<div class="report-list-row"><strong>'+esc(n)+'</strong><b>'+fa(v)+'</b></div>').join(""):'<p class="helper">در این بازه فاکتوری ثبت نشده است.</p>';
+ const topP=[...ps.entries()].sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5);$("reportTopProducts").innerHTML=topP.length?topP.map(([n,v])=>'<div class="report-list-row"><strong>'+esc(n)+'<small>تعداد: '+fa(v.quantity)+'</small></strong><b>'+fa(v.revenue)+'</b></div>').join(""):'<p class="helper">اطلاعات کالایی برای نمایش وجود ندارد.</p>';
+ $("reportCountHint").textContent=fa(scoped.length)+" فاکتور در بازهٔ انتخاب‌شده";
 }
 
 function setupNavigation(){
@@ -334,6 +354,7 @@ function init(){
  $("customerPicker").addEventListener("change",()=>{const c=customers.find(x=>x.id===$("customerPicker").value);if(c){$("customerName").value=c.name;$("customerPhone").value=c.phone;$("previewCustomerName").textContent=c.name;$("previewCustomerPhone").textContent=c.phone?`تلفن: ${c.phone}`:""}});
  $("saveInvoice").addEventListener("click",saveInvoice);$("newInvoice").addEventListener("click",newInvoice);
  $("saveBusinessSettings").addEventListener("click",saveBusinessSettings);
+ $("reportPeriod").addEventListener("change",drawReports);$("reportCurrency").addEventListener("change",drawReports);
  $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]");if(o)loadInvoice(o.dataset.openInvoice)});
  $("saveProduct").addEventListener("click",saveProduct);$("cancelProductEdit").addEventListener("click",clearProductForm);$("productSearch").addEventListener("input",drawProductList);
  $("productsList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-product]"),del=e.target.closest("[data-delete-product]");if(edit){editProduct(edit.dataset.editProduct);return}if(del&&confirm("این کالا غیرفعال شود؟ سوابق انبار و فاکتورهای مرتبط حفظ می‌شوند.")){(async()=>{const requestedUserId=currentUser?.id;if(!requestedUserId)return;try{const {error}=await supabaseClient.from("products").update({is_active:false}).eq("id",del.dataset.deleteProduct);if(currentUser?.id!==requestedUserId)return;if(error)throw error;await loadCloudData();if(currentUser?.id===requestedUserId)$("productStatus").textContent="کالا غیرفعال شد؛ سوابق آن حفظ شده است."}catch(error){if(currentUser?.id===requestedUserId)$("productStatus").textContent="غیرفعال‌سازی کالا انجام نشد: "+cloudError(error)}})()}});
@@ -350,9 +371,10 @@ function setAuthMode(mode){
  const signup=mode==="signup",reset=mode==="reset",updatePassword=mode==="updatepassword";
  $("authTitle").textContent=signup?"ساخت حساب کاربری":reset?"بازیابی رمز عبور":updatePassword?"تعیین رمز عبور جدید":"ورود به فروش‌نامه";
  $("authDescription").textContent=signup?"برای ساخت حساب، نام، ایمیل و یک رمز عبور امن وارد کن.":reset?"ایمیل حساب خود را وارد کن تا پیوند بازیابی رمز برایت ارسال شود.":updatePassword?"یک رمز عبور تازه و امن برای حساب خود انتخاب کن.":"برای دسترسی به فضای کاری خود وارد حساب کاربری‌ات شو.";
- $("fullNameField").hidden=!signup;$("confirmPasswordField").hidden=!(signup||updatePassword);$("passwordField").hidden=reset;
- $("authPassword").required=!reset;$("authConfirmPassword").required=signup||updatePassword;
- $("authPassword").autocomplete=signup?"new-password":"current-password";
+ $("fullNameField").hidden=!signup;$("authFullName").required=signup;
+ $("confirmPasswordField").hidden=!(signup||updatePassword);$("authConfirmPassword").required=signup||updatePassword;
+ $("passwordField").hidden=reset;$("authPassword").required=!reset;$("authPassword").autocomplete=signup||updatePassword?"new-password":"current-password";
+ if(!signup)$("authFullName").value="";if(!(signup||updatePassword))$("authConfirmPassword").value="";
  $("authSubmit").textContent=signup?"ایجاد حساب":reset?"ارسال پیوند بازیابی":updatePassword?"ذخیرهٔ رمز جدید":"ورود";
  $("toggleAuthMode").hidden=reset||updatePassword;$("forgotPasswordButton").hidden=signup||reset||updatePassword;
  $("toggleAuthMode").textContent=signup?"قبلاً حساب ساخته‌ام؛ ورود":"ساخت حساب جدید";
@@ -371,19 +393,21 @@ function resetUserWorkspace(){
  $("stockQuantity").value="";$("stockDescription").value="";
  drawItems();preview();drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawDashboard();
 }
+function openAuth(mode="login"){setAuthMode(mode);$("authScreen").hidden=false;const target=mode==="signup"?$("authFullName"):$("authEmail");target?.focus()}
+function closeAuth(){if(!recoveryMode&&!currentUser)$("authScreen").hidden=true}
 function showAuthenticatedApp(user){
  const switchingAccount=!!currentUser?.id&&currentUser.id!==user.id;
  KEYS=Object.fromEntries(Object.entries(BASE_KEYS).map(([k,v])=>[k,`${v}.${user.id}`]));
  if(switchingAccount)resetUserWorkspace();
  currentUser=user;document.querySelector("main.page").hidden=false;
- $("authScreen").hidden=true;$("accountEmail").hidden=false;$("accountEmail").textContent=user.email||"حساب کاربری";$("signOutButton").hidden=false;
+ $("publicSite").hidden=true;$("appTopbar").hidden=false;$("authScreen").hidden=true;$("accountEmail").hidden=false;$("accountEmail").textContent=user.email||"حساب کاربری";$("signOutButton").hidden=false;
  if(!window.forushnamehInitialized){init();window.forushnamehInitialized=true}
  else{drawInvoices();loadCloudData().catch(error=>{if(currentUser?.id===user.id)alert("بارگذاری اطلاعات ابری انجام نشد: "+cloudError(error))})}
 }
 function showSignedOut(){
  currentUser=null;KEYS=Object.fromEntries(Object.entries(BASE_KEYS).map(([k,v])=>[k,`${v}.signed-out`]));resetUserWorkspace();
- $("authScreen").hidden=false;$("authPassword").value="";$("authConfirmPassword").value="";$("accountEmail").hidden=true;$("signOutButton").hidden=true;
- document.querySelector("main.page").hidden=true;setAuthMode("login");
+ $("authScreen").hidden=true;$("authPassword").value="";$("authConfirmPassword").value="";$("authFullName").value="";$("accountEmail").hidden=true;$("signOutButton").hidden=true;
+ document.querySelector("main.page").hidden=true;$("appTopbar").hidden=true;$("publicSite").hidden=false;setAuthMode("login");
 }
 async function handleAuthSubmit(event){
  event.preventDefault();const email=$("authEmail").value.trim(),password=$("authPassword").value,name=$("authFullName").value.trim();
@@ -419,12 +443,14 @@ async function startAuth(){
  if(!window.supabase?.createClient){showSignedOut();showAuthMessage("کتابخانهٔ اتصال بارگذاری نشد؛ اتصال اینترنت را بررسی و صفحه را تازه‌سازی کن.",true);return}
  supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
  $("authForm").addEventListener("submit",handleAuthSubmit);
+ document.querySelectorAll("[data-auth-open]").forEach(button=>button.addEventListener("click",()=>openAuth(button.dataset.authOpen||"login")));
+ $("closeAuthButton").addEventListener("click",closeAuth);$("authScreen").addEventListener("click",event=>{if(event.target===$("authScreen"))closeAuth()});
  $("toggleAuthMode").addEventListener("click",()=>setAuthMode(authMode==="signup"?"login":"signup"));
  $("forgotPasswordButton").addEventListener("click",()=>setAuthMode("reset"));
  $("signOutButton").addEventListener("click",async()=>{const {error}=await supabaseClient.auth.signOut();if(error){alert(authErrorMessage(error));return}showSignedOut()});
- supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_IN"&&session?.user)showAuthenticatedApp(session.user);if(event==="SIGNED_OUT")showSignedOut();if(event==="PASSWORD_RECOVERY"){recoveryMode=true;document.querySelector("main.page").hidden=true;$("authScreen").hidden=false;setAuthMode("updatepassword");showAuthMessage("پیوند بازیابی تأیید شد؛ رمز جدیدت را وارد کن.")}});
+ supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_IN"&&session?.user)showAuthenticatedApp(session.user);if(event==="SIGNED_OUT")showSignedOut();if(event==="PASSWORD_RECOVERY"){recoveryMode=true;document.querySelector("main.page").hidden=true;$("publicSite").hidden=false;$("appTopbar").hidden=true;$("authScreen").hidden=false;setAuthMode("updatepassword");showAuthMessage("پیوند بازیابی تأیید شد؛ رمز جدیدت را وارد کن.")}});
  const {data:{session},error}=await supabaseClient.auth.getSession();
- if(error){showSignedOut();showAuthMessage(authErrorMessage(error),true);return}
+ if(error){showSignedOut();openAuth("login");showAuthMessage(authErrorMessage(error),true);return}
  if(session?.user&&!recoveryMode){showAuthenticatedApp(session.user)}else if(!recoveryMode){showSignedOut()}
 }
 startAuth();
