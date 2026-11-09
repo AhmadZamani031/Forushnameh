@@ -246,3 +246,11 @@ body{background:#f4f7fb;color:var(--ink)}
 .share-legend b{font-size:10px;white-space:nowrap}
 @media(max-width:1050px){.report-chart-grid{grid-template-columns:1fr 1fr}.report-chart-grid>section:first-child{grid-column:1/-1}}
 @media(max-width:650px){.report-chart-grid,.report-list-grid{grid-template-columns:1fr}.report-chart-grid>section:first-child{grid-column:auto}.report-share-chart{gap:12px}.share-ring{width:120px;height:120px;flex-basis:120px}.share-legend span{max-width:150px}}
+
+/* پالت نهایی یکپارچه برای محیط مدیریت */
+:root{--green:#174b91;--green2:#2464b4;--mint:#eaf2fc;--ink:#17263b;--muted:#718096;--line:#e4eaf2;--orange:#159c91}
+body{background:#f5f8fc;color:var(--ink)}
+label{color:#526783}
+input,textarea,select{border-color:#dfe7f1;background:#fbfcfe}
+input:focus,textarea:focus,select:focus{border-color:#6c9be0;box-shadow:0 0 0 3px #174b9117}
+.panel,.report-stat,.report-inner{border-color:var(--line)}
