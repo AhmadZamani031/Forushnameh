@@ -121,7 +121,7 @@ async function saveInvoice(){
  const requestedUserId=currentUser?.id;
  if(!supabaseClient||!requestedUserId){$("savedStatus").textContent="برای صدور فاکتور ابتدا وارد حساب کاربری شو.";return}
  if(editingInvoiceId){$("savedStatus").textContent="این فاکتور قبلاً صادر شده و امکان ویرایش مستقیم آن وجود ندارد. برای صدور فاکتور تازه، «فاکتور جدید» را بزن.";return}
- const dateRaw=$("invoiceDate").value.trim().replace(/\//g,"-");
+ const dateRaw=$("invoiceDate").value.trim().replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/\//g,"-");
  const dateParts=dateRaw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
  const validDate=!!dateParts&&(()=>{const y=Number(dateParts[1]),m=Number(dateParts[2]),d=Number(dateParts[3]),dt=new Date(Date.UTC(y,m-1,d));return dt.getUTCFullYear()===y&&dt.getUTCMonth()===m-1&&dt.getUTCDate()===d})();
  if(!validDate){$("savedStatus").textContent="تاریخ معتبر نیست؛ از قالب سال/ماه/روز میلادی استفاده کن.";return}
