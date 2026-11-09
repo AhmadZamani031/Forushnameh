@@ -452,7 +452,7 @@ async function startAuth(){
  supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_IN"&&session?.user)showAuthenticatedApp(session.user);if(event==="SIGNED_OUT")showSignedOut();if(event==="PASSWORD_RECOVERY"){recoveryMode=true;document.querySelector("main.page").hidden=true;$("publicSite").hidden=false;$("appTopbar").hidden=true;$("authScreen").hidden=false;setAuthMode("updatepassword");showAuthMessage("پیوند بازیابی تأیید شد؛ رمز جدیدت را وارد کن.")}});
  const {data:{session},error}=await supabaseClient.auth.getSession();
  if(error){showSignedOut();openAuth("login");showAuthMessage(authErrorMessage(error),true);return}
- if(session?.user&&!recoveryMode){showAuthenticatedApp(session.user)}else if(!recoveryMode){showSignedOut()}
+ if(session?.user&&!recoveryMode){showAuthenticatedApp(session.user)}else if(!recoveryMode){showSignedOut();const requestedMode=new URLSearchParams(window.location.search).get("auth");if(requestedMode==="login"||requestedMode==="signup")openAuth(requestedMode)}
 }
 startAuth();
 })();
