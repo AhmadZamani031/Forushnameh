@@ -134,8 +134,9 @@ function preview(){
  const d=invoiceData();
  $("previewStoreName").textContent=d.storeName||"نام فروشگاه";$("previewStoreAddress").textContent=d.storeAddress;$("previewStorePhone").textContent=d.storePhone?`تلفن: ${d.storePhone}`:"";
  $("previewInvoiceNumber").textContent=d.invoiceNumber||"—";$("previewInvoiceDate").textContent=d.invoiceDate||"—";$("previewCustomerName").textContent=d.customerName||"مشتری گرامی";$("previewCustomerPhone").textContent=d.customerPhone?`تلفن: ${d.customerPhone}`:"";
- $("previewCurrency").textContent=d.currency||"تومان";$("previewItems").innerHTML=items.map(it=>`<tr><td>${esc(it.name||"—")}</td><td>${fa(it.quantity)}</td><td>${fa(it.price)}</td><td>${fa(it.quantity*it.price)}</td></tr>`).join("");
- const subtotal=total(),discount=num(d.discountAmount),tax=num(d.taxAmount),grand=Math.max(0,subtotal-discount+tax);\n $("previewSubtotal").textContent=fa(subtotal);$("previewDiscount").textContent=fa(discount);$("previewTax").textContent=fa(tax);$("previewTotal").textContent=fa(grand);$("previewNotes").textContent=d.notes||"از خرید شما سپاسگزاریم.";$("previewNotesBlock").style.display=d.notes?"block":"none";
+ $("previewCurrency").textContent=d.currency||"تومان";$("previewCurrencyTotal").textContent=d.currency||"تومان";$("previewItems").innerHTML=items.map(it=>`<tr><td>${esc(it.name||"—")}</td><td>${fa(it.quantity)}</td><td>${fa(it.price)}</td><td>${fa(it.quantity*it.price)}</td></tr>`).join("");
+ const subtotal=total(),discount=num(d.discountAmount),tax=num(d.taxAmount),grand=Math.max(0,subtotal-discount+tax);
+ $("previewSubtotal").textContent=fa(subtotal);$("previewDiscount").textContent=fa(discount);$("previewTax").textContent=fa(tax);$("previewTotal").textContent=fa(grand);$("previewNotes").textContent=d.notes||"از خرید شما سپاسگزاریم.";$("previewNotesBlock").style.display=d.notes?"block":"none";
  items.forEach(it=>{const c=$("itemsEditor").querySelector(`[data-item-id="${it.id}"]`);if(c)c.querySelector("input[disabled]").value=fa(it.quantity*it.price)});
 }
 function drawInvoices(){
@@ -185,7 +186,9 @@ async function saveInvoice(){
  const validDate=!!dateParts&&(()=>{const y=Number(dateParts[1]),m=Number(dateParts[2]),d=Number(dateParts[3]),dt=new Date(Date.UTC(y,m-1,d));return dt.getUTCFullYear()===y&&dt.getUTCMonth()===m-1&&dt.getUTCDate()===d})();
  if(!validDate){$("savedStatus").textContent="تاریخ معتبر نیست؛ از قالب سال/ماه/روز میلادی استفاده کن.";return}
  if(!items.length||items.some(it=>!String(it.name||"").trim()||num(it.quantity)<=0||num(it.price)<0)){$("savedStatus").textContent="همهٔ ردیف‌ها باید شرح، تعداد بیشتر از صفر و قیمت معتبر داشته باشند.";return}
- const subtotal=total(),discount=num($("discountAmount").value),tax=num($("taxAmount").value);\n if(discount>subtotal){$("savedStatus").textContent="مبلغ تخفیف نمی‌تواند از جمع اقلام بیشتر باشد.";return}\n const payload={customer_id:$("customerPicker").value||null,customer_name:$("customerName").value.trim(),customer_phone:$("customerPhone").value.trim(),invoice_date:dateRaw,currency:$("currency").value||"تومان",notes:$("notes").value.trim(),discount_amount:discount,tax_amount:tax,items:items.map(it=>({product_id:it.productId||null,description:String(it.name||"").trim(),unit:productById(it.productId)?.unit||"عدد",quantity:num(it.quantity),unit_price:num(it.price)}))};
+ const subtotal=total(),discount=num($("discountAmount").value),tax=num($("taxAmount").value);
+ if(discount>subtotal){$("savedStatus").textContent="مبلغ تخفیف نمی‌تواند از جمع اقلام بیشتر باشد.";return}
+ const payload={customer_id:$("customerPicker").value||null,customer_name:$("customerName").value.trim(),customer_phone:$("customerPhone").value.trim(),invoice_date:dateRaw,currency:$("currency").value||"تومان",notes:$("notes").value.trim(),discount_amount:discount,tax_amount:tax,items:items.map(it=>({product_id:it.productId||null,description:String(it.name||"").trim(),unit:productById(it.productId)?.unit||"عدد",quantity:num(it.quantity),unit_price:num(it.price)}))};
  const btn=$("saveInvoice");btn.disabled=true;$("savedStatus").textContent="در حال صدور فاکتور و بررسی موجودی در پایگاه داده…";
  try{
   const {data,error}=await supabaseClient.rpc("forushnameh_issue_invoice",{p_invoice:payload});if(error)throw error;
