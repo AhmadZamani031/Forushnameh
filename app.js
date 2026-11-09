@@ -85,8 +85,6 @@ function drawInvoices(){
  host.innerHTML=cloudInvoices.map(x=>'<div class="saved-invoice"><div class="saved-invoice-info"><strong>'+esc(x.data.invoiceNumber||"بدون شماره")+' — '+esc(x.data.customerName||"بدون نام مشتری")+'</strong><span>'+esc(x.data.invoiceDate||"بدون تاریخ")+' · '+fa(x.totalAmount)+' '+esc(x.data.currency||"تومان")+' · '+(x.status==="issued"?"صادرشده":esc(x.status||""))+'</span></div><div class="saved-invoice-actions"><button class="button button-light" data-open-invoice="'+esc(x.id)+'">مشاهده</button></div></div>').join("");
 }
 
-function movement(
-
 function movement(kind,productId,quantity,description,reference){
  const p=productById(productId); if(!p)return;
  movements.unshift({id:`mov-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,kind,productId,productName:p.name,quantity:num(quantity),description:description||"",reference:reference||"",date:new Date().toISOString()});
