@@ -52,14 +52,37 @@ async function loadCloudData(){
 }
 async function loadCloudInvoices(requestedUserId=currentUser?.id){
  if(!supabaseClient||!requestedUserId)return false;
- const {data:rows,error}=await supabaseClient.from("invoices").select("id,invoice_number,invoice_date,status,currency,business_name_snapshot,business_phone_snapshot,business_address_snapshot,customer_name_snapshot,customer_phone_snapshot,notes,subtotal,discount_amount,tax_amount,total_amount,created_at").order("created_at",{ascending:false});
- if(currentUser?.id!==requestedUserId)return false;
- if(error)throw error;
- const ids=(rows||[]).map(x=>x.id);let itemRows=[];
- if(ids.length){const result=await supabaseClient.from("invoice_items").select("id,invoice_id,product_id,description,quantity,unit,unit_price,sort_order").in("invoice_id",ids).order("sort_order");if(currentUser?.id!==requestedUserId)return false;if(result.error)throw result.error;itemRows=result.data||[]}
+ const invoiceColumns="id,invoice_number,invoice_date,status,currency,business_name_snapshot,business_phone_snapshot,business_address_snapshot,customer_name_snapshot,customer_phone_snapshot,notes,subtotal,discount_amount,tax_amount,total_amount,created_at";
+ const itemColumns="id,invoice_id,product_id,description,quantity,unit,unit_price,sort_order";
+ const rows=[];let from=0;const pageSize=1000;
+ while(true){
+  const {data,error}=await supabaseClient.from("invoices").select(invoiceColumns)
+   .order("created_at",{ascending:false}).order("id",{ascending:false})
+   .range(from,from+pageSize-1);
+  if(currentUser?.id!==requestedUserId)return false;
+  if(error)throw error;
+  const batch=data||[];rows.push(...batch);
+  if(batch.length<pageSize)break;
+  from+=pageSize;
+ }
+ const ids=rows.map(x=>x.id),itemRows=[];
+ // Keep each IN filter compact and paginate invoice lines independently.
+ for(let i=0;i<ids.length;i+=100){
+  const idBatch=ids.slice(i,i+100);let itemFrom=0;
+  while(true){
+   const {data,error}=await supabaseClient.from("invoice_items").select(itemColumns)
+    .in("invoice_id",idBatch).order("invoice_id").order("sort_order").order("id")
+    .range(itemFrom,itemFrom+pageSize-1);
+   if(currentUser?.id!==requestedUserId)return false;
+   if(error)throw error;
+   const batch=data||[];itemRows.push(...batch);
+   if(batch.length<pageSize)break;
+   itemFrom+=pageSize;
+  }
+ }
  const grouped=new Map();
  itemRows.forEach(row=>{if(!grouped.has(row.invoice_id))grouped.set(row.invoice_id,[]);grouped.get(row.invoice_id).push({id:row.id,name:row.description||"",quantity:Number(row.quantity)||0,price:Number(row.unit_price)||0,productId:row.product_id||"",unit:row.unit||"عدد"})});
- cloudInvoices=(rows||[]).map(row=>({id:row.id,status:row.status,totalAmount:Number(row.total_amount)||0,data:{invoiceNumber:row.invoice_number||"",invoiceDate:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",discountAmount:String(Number(row.discount_amount)||0),taxAmount:String(Number(row.tax_amount)||0),notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at}));
+ cloudInvoices=rows.map(row=>({id:row.id,status:row.status,totalAmount:Number(row.total_amount)||0,data:{invoiceNumber:row.invoice_number||"",invoiceDate:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",discountAmount:String(Number(row.discount_amount)||0),taxAmount:String(Number(row.tax_amount)||0),notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at}));
  drawInvoices();return true;
 }
 
