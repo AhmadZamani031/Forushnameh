@@ -267,10 +267,46 @@ async function saveCustomer(){
  }catch(error){if(currentUser?.id===requestedUserId)$("customerStatus").textContent="ذخیره مشتری انجام نشد: "+cloudError(error)}finally{if(currentUser?.id===requestedUserId)btn.disabled=false}
 }
 function editCustomer(id){if(window.showForushnamehPage)window.showForushnamehPage("customers");const c=customers.find(x=>x.id===id);if(!c)return;editingCustomerId=id;$("customerRecordName").value=c.name;$("customerRecordPhone").value=c.phone;$("customerRecordEmail").value=c.email;$("customerRecordAddress").value=c.address;$("saveCustomer").textContent="ذخیرهٔ تغییرات";$("cancelCustomerEdit").hidden=false}
-function backupExport(){
- const payload={app:"ForushNameh",formatVersion:2,createdAt:new Date().toISOString(),invoices:cloudInvoices,products,customers,movements};
- const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
- a.href=url;a.download=`ForushNameh-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url);$("backupStatus").textContent="فایل پشتیبان ساخته شد؛ آن را در جای امن نگه دار.";
+async function backupExport(){
+ const requestedUserId=currentUser?.id;
+ if(!supabaseClient||!requestedUserId){$("backupStatus").textContent="برای تهیهٔ پشتیبان ابتدا وارد حساب کاربری شو.";return}
+ const btn=$("exportData");btn.disabled=true;
+ $("backupStatus").textContent="در حال دریافت همهٔ اطلاعات از فضای ابری…";
+ try{
+  async function fetchAll(table,columns){
+   const result=[];let from=0;const pageSize=1000;
+   while(true){
+    const {data,error}=await supabaseClient.from(table).select(columns).order("created_at",{ascending:true}).range(from,from+pageSize-1);
+    if(error)throw error;
+    const batch=data||[];result.push(...batch);
+    if(batch.length<pageSize)break;
+    from+=pageSize;
+   }
+   return result;
+  }
+  const [productRows,customerRows,movementRows]=await Promise.all([
+   fetchAll("products","id,name,sku,unit,sale_price,stock_on_hand,min_stock,note,is_active"),
+   fetchAll("customers","id,name,phone,email,address,note,is_active"),
+   fetchAll("inventory_movements","id,product_id,movement_type,quantity_delta,description,reference,occurred_at")
+  ]);
+  if(currentUser?.id!==requestedUserId)return;
+  const allProducts=productRows.map(mapCloudProduct);
+  const allCustomers=customerRows.map(mapCloudCustomer);
+  const allMovements=movementRows.map(m=>{
+   const p=allProducts.find(x=>x.id===m.product_id);
+   return {id:m.id,kind:m.movement_type==="purchase"||m.movement_type==="opening"?"in":m.movement_type==="sale"?"sale":"return",productId:m.product_id,productName:p?.name||"کالای حذف‌شده",quantity:Math.abs(Number(m.quantity_delta)||0),description:m.description||"",reference:m.reference||"",date:m.occurred_at};
+  });
+  const payload={app:"ForushNameh",formatVersion:3,createdAt:new Date().toISOString(),invoices:cloudInvoices,products:allProducts,customers:allCustomers,movements:allMovements};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download=`ForushNameh-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  $("backupStatus").textContent="فایل پشتیبان از همهٔ کالاها، مشتریان، فاکتورها و گردش‌های انبار ساخته شد.";
+ }catch(error){
+  if(currentUser?.id===requestedUserId)$("backupStatus").textContent="تهیهٔ پشتیبان کامل انجام نشد: "+cloudError(error);
+ }finally{
+  if(currentUser?.id===requestedUserId)btn.disabled=false;
+ }
 }
 async function backupImport(file){
  if(!file)return;
