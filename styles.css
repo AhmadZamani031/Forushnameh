@@ -184,3 +184,41 @@ body{background:#f4f7fb;color:var(--ink)}
 .invoice-symbol{display:grid;place-items:center;overflow:hidden;padding:0;background:transparent}
 .invoice-symbol img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
 @media(max-width:650px){.public-brand img{width:145px;height:auto;max-height:48px}.brand-logo{width:min(210px,58vw);height:auto;max-height:55px}}
+
+
+/* نسخهٔ ۹: بهبود نمای عمومی و فرم‌ها */
+.brand-lockup{display:inline-flex;align-items:center;text-decoration:none}
+.brand-lockup:focus-visible,.public-brand:focus-visible,.auth-card>a:focus-visible{outline:3px solid #82cbbb;outline-offset:5px;border-radius:10px}
+.public-hero{padding-top:58px;padding-bottom:74px;gap:34px}
+.public-hero-visual{min-height:430px}
+.hero-product-illustration{display:block;width:min(100%,620px);height:auto;filter:drop-shadow(0 22px 35px rgba(26,61,94,.10));animation:heroFloat 7s ease-in-out infinite}
+@keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.feature-card{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.feature-card:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(29,64,101,.09);border-color:#cbdedc}
+.public-section{padding-top:76px;padding-bottom:76px}
+.public-section-heading{margin-bottom:30px}
+.public-hero-copy>p{font-size:15px;line-height:2.1;max-width:540px}
+.public-trust{font-size:12px}
+.password-strength{margin:-4px 0 16px;display:grid;gap:7px}
+.password-strength[hidden]{display:none}
+.password-strength-track{height:6px;border-radius:20px;background:#e9eef4;overflow:hidden}
+.password-strength-track span{display:block;height:100%;width:0;border-radius:20px;background:#cf6b5c;transition:width .2s ease,background .2s ease}
+.password-strength-track span[data-level="2"]{background:#d9a33c}
+.password-strength-track span[data-level="3"]{background:#4b9d91}
+.password-strength-track span[data-level="4"]{background:#16856f}
+.password-strength small{font-size:11px;color:#6d7d90}
+.password-strength .password-strength-hint{color:#8c9aaa}
+.auth-card>a{display:inline-block}
+.auth-logo{cursor:pointer}
+#downloadPdf{border-color:#d4e1ed}
+#downloadPdf:hover{border-color:#a8c4da;background:#f4f8fb}
+.saved-actions{flex-wrap:wrap}
+.standalone-faq details{border:1px solid #e1e9f1;border-radius:13px;padding:16px 18px;background:#fff}
+.standalone-faq details+details{margin-top:10px}
+.standalone-faq summary{font-weight:700;color:#243f5d;cursor:pointer}
+.standalone-faq details p{line-height:2;color:#65768a}
+.standalone-page{max-width:900px}
+.public-footer{gap:20px}
+@media(max-width:900px){.public-hero{grid-template-columns:1fr;gap:12px;padding-top:38px}.public-hero-copy{max-width:720px}.public-hero-visual{min-height:300px}.hero-product-illustration{max-width:520px;margin:auto}}
+@media(max-width:600px){.public-hero{padding:28px 18px 46px}.public-hero-visual{min-height:250px}.public-section{padding:54px 18px}.public-header{padding:8px 15px}.public-brand img{width:160px}.saved-actions .button{flex:1 1 100%}.auth-logo{width:min(210px,75%)}}
+@media(prefers-reduced-motion:reduce){.hero-product-illustration,.feature-card{animation:none;transition:none}}
