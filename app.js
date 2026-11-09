@@ -9,7 +9,7 @@ let supabaseClient=null;
 let currentUser=null;
 let authMode="login";
 let recoveryMode=false;
-const invoiceFields=["storeName","storePhone","storeAddress","customerName","customerPhone","invoiceNumber","invoiceDate","currency","notes"];
+const invoiceFields=["storeName","storePhone","storeAddress","customerName","customerPhone","invoiceNumber","invoiceDate","currency","discountAmount","taxAmount","notes"];
 let items=[{id:1,name:"محصول نمونه",quantity:1,price:250000,productId:""},{id:2,name:"خدمات",quantity:2,price:50000,productId:""}];
 let nextItemId=3, editingInvoiceId=null, editingProductId=null, editingCustomerId=null;
 let products=[], customers=[], movements=[], cloudInvoices=[], businessSettings=null;
@@ -59,7 +59,7 @@ async function loadCloudInvoices(requestedUserId=currentUser?.id){
  if(ids.length){const result=await supabaseClient.from("invoice_items").select("id,invoice_id,product_id,description,quantity,unit,unit_price,sort_order").in("invoice_id",ids).order("sort_order");if(currentUser?.id!==requestedUserId)return false;if(result.error)throw result.error;itemRows=result.data||[]}
  const grouped=new Map();
  itemRows.forEach(row=>{if(!grouped.has(row.invoice_id))grouped.set(row.invoice_id,[]);grouped.get(row.invoice_id).push({id:row.id,name:row.description||"",quantity:Number(row.quantity)||0,price:Number(row.unit_price)||0,productId:row.product_id||"",unit:row.unit||"عدد"})});
- cloudInvoices=(rows||[]).map(row=>({id:row.id,status:row.status,totalAmount:Number(row.total_amount)||0,data:{invoiceNumber:row.invoice_number||"",invoiceDate:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at}));
+ cloudInvoices=(rows||[]).map(row=>({id:row.id,status:row.status,totalAmount:Number(row.total_amount)||0,data:{invoiceNumber:row.invoice_number||"",invoiceDate:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",discountAmount:String(Number(row.discount_amount)||0),taxAmount:String(Number(row.tax_amount)||0),notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at}));
  drawInvoices();return true;
 }
 
@@ -135,7 +135,7 @@ function preview(){
  $("previewStoreName").textContent=d.storeName||"نام فروشگاه";$("previewStoreAddress").textContent=d.storeAddress;$("previewStorePhone").textContent=d.storePhone?`تلفن: ${d.storePhone}`:"";
  $("previewInvoiceNumber").textContent=d.invoiceNumber||"—";$("previewInvoiceDate").textContent=d.invoiceDate||"—";$("previewCustomerName").textContent=d.customerName||"مشتری گرامی";$("previewCustomerPhone").textContent=d.customerPhone?`تلفن: ${d.customerPhone}`:"";
  $("previewCurrency").textContent=d.currency||"تومان";$("previewItems").innerHTML=items.map(it=>`<tr><td>${esc(it.name||"—")}</td><td>${fa(it.quantity)}</td><td>${fa(it.price)}</td><td>${fa(it.quantity*it.price)}</td></tr>`).join("");
- $("previewTotal").textContent=fa(total());$("previewNotes").textContent=d.notes||"از خرید شما سپاسگزاریم.";$("previewNotesBlock").style.display=d.notes?"block":"none";
+ const subtotal=total(),discount=num(d.discountAmount),tax=num(d.taxAmount),grand=Math.max(0,subtotal-discount+tax);\n $("previewSubtotal").textContent=fa(subtotal);$("previewDiscount").textContent=fa(discount);$("previewTax").textContent=fa(tax);$("previewTotal").textContent=fa(grand);$("previewNotes").textContent=d.notes||"از خرید شما سپاسگزاریم.";$("previewNotesBlock").style.display=d.notes?"block":"none";
  items.forEach(it=>{const c=$("itemsEditor").querySelector(`[data-item-id="${it.id}"]`);if(c)c.querySelector("input[disabled]").value=fa(it.quantity*it.price)});
 }
 function drawInvoices(){
@@ -185,7 +185,7 @@ async function saveInvoice(){
  const validDate=!!dateParts&&(()=>{const y=Number(dateParts[1]),m=Number(dateParts[2]),d=Number(dateParts[3]),dt=new Date(Date.UTC(y,m-1,d));return dt.getUTCFullYear()===y&&dt.getUTCMonth()===m-1&&dt.getUTCDate()===d})();
  if(!validDate){$("savedStatus").textContent="تاریخ معتبر نیست؛ از قالب سال/ماه/روز میلادی استفاده کن.";return}
  if(!items.length||items.some(it=>!String(it.name||"").trim()||num(it.quantity)<=0||num(it.price)<0)){$("savedStatus").textContent="همهٔ ردیف‌ها باید شرح، تعداد بیشتر از صفر و قیمت معتبر داشته باشند.";return}
- const payload={customer_id:$("customerPicker").value||null,customer_name:$("customerName").value.trim(),customer_phone:$("customerPhone").value.trim(),invoice_date:dateRaw,currency:$("currency").value||"تومان",notes:$("notes").value.trim(),discount_amount:0,tax_amount:0,items:items.map(it=>({product_id:it.productId||null,description:String(it.name||"").trim(),unit:productById(it.productId)?.unit||"عدد",quantity:num(it.quantity),unit_price:num(it.price)}))};
+ const subtotal=total(),discount=num($("discountAmount").value),tax=num($("taxAmount").value);\n if(discount>subtotal){$("savedStatus").textContent="مبلغ تخفیف نمی‌تواند از جمع اقلام بیشتر باشد.";return}\n const payload={customer_id:$("customerPicker").value||null,customer_name:$("customerName").value.trim(),customer_phone:$("customerPhone").value.trim(),invoice_date:dateRaw,currency:$("currency").value||"تومان",notes:$("notes").value.trim(),discount_amount:discount,tax_amount:tax,items:items.map(it=>({product_id:it.productId||null,description:String(it.name||"").trim(),unit:productById(it.productId)?.unit||"عدد",quantity:num(it.quantity),unit_price:num(it.price)}))};
  const btn=$("saveInvoice");btn.disabled=true;$("savedStatus").textContent="در حال صدور فاکتور و بررسی موجودی در پایگاه داده…";
  try{
   const {data,error}=await supabaseClient.rpc("forushnameh_issue_invoice",{p_invoice:payload});if(error)throw error;
