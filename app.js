@@ -355,6 +355,7 @@ function init(){
  $("addItem").addEventListener("click",()=>{items.push({id:nextItemId++,name:"",quantity:1,price:0,productId:""});drawItems();preview()});
  $("currency").addEventListener("change",()=>{drawItems();preview()});
  $("customerPicker").addEventListener("change",()=>{const c=customers.find(x=>x.id===$("customerPicker").value);if(c){$("customerName").value=c.name;$("customerPhone").value=c.phone;$("previewCustomerName").textContent=c.name;$("previewCustomerPhone").textContent=c.phone?`تلفن: ${c.phone}`:""}});
+ ["customerName","customerPhone"].forEach(id=>$(id).addEventListener("input",()=>{if($("customerPicker").value)$("customerPicker").value="";}));
  $("saveInvoice").addEventListener("click",saveInvoice);$("newInvoice").addEventListener("click",newInvoice);
  $("saveBusinessSettings").addEventListener("click",saveBusinessSettings);
  $("reportPeriod").addEventListener("change",drawReports);$("reportCurrency").addEventListener("change",drawReports);
