@@ -47,7 +47,7 @@ async function loadCloudData(){
  if(currentUser?.id!==requestedUserId)return false;
  try{await loadBusinessSettings(requestedUserId)}catch(settingsError){$("businessSettingsStatus").textContent="بارگذاری تنظیمات انجام نشد: "+cloudError(settingsError)}
  if(currentUser?.id!==requestedUserId)return false;
- drawDashboard();
+ drawDashboard();drawReports();
  return true;
 }
 async function loadCloudInvoices(requestedUserId=currentUser?.id){
@@ -312,7 +312,7 @@ function drawDashboard(){
  drawReports();
 }
 
-function parseInvoiceDate(value){const raw=String(value||"").slice(0,10),m=raw.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);if(!m)return null;const d=new Date(+m[1],+m[2]-1,+m[3]);return Number.isNaN(d.getTime())?null:d}
+function parseInvoiceDate(value){const raw=String(value||"").slice(0,10),m=raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return null;const d=new Date(+m[1],+m[2]-1,+m[3]);return Number.isNaN(d.getTime())?null:d}
 function drawReports(){
  const periodEl=$("reportPeriod"),currencyEl=$("reportCurrency");if(!periodEl||!currencyEl)return;
  const currencies=[...new Set(cloudInvoices.map(x=>x.data?.currency||"تومان"))].sort(),old=currencyEl.value;
@@ -362,7 +362,7 @@ function init(){
  $("customersList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-customer]"),del=e.target.closest("[data-delete-customer]");if(edit){editCustomer(edit.dataset.editCustomer);return}if(del&&confirm("این مشتری غیرفعال شود؟ سوابق فاکتورهای مرتبط حفظ می‌شوند.")){(async()=>{const requestedUserId=currentUser?.id;if(!requestedUserId)return;try{const {error}=await supabaseClient.from("customers").update({is_active:false}).eq("id",del.dataset.deleteCustomer);if(currentUser?.id!==requestedUserId)return;if(error)throw error;await loadCloudData();if(currentUser?.id===requestedUserId)$("customerStatus").textContent="مشتری غیرفعال شد؛ سوابق آن حفظ شده است."}catch(error){if(currentUser?.id===requestedUserId)$("customerStatus").textContent="غیرفعال‌سازی مشتری انجام نشد: "+cloudError(error)}})()}});
  $("receiveStock").addEventListener("click",receiveStock);$("exportData").addEventListener("click",backupExport);$("importData").addEventListener("change",e=>backupImport(e.target.files[0]));
  $("downloadPng").addEventListener("click",async()=>{const btn=$("downloadPng"),status=$("statusMessage");if(typeof window.html2canvas!=="function"){status.textContent="ابزار ساخت تصویر بارگذاری نشده است؛ اتصال اینترنت را بررسی کن.";return}btn.disabled=true;status.textContent="در حال آماده‌سازی تصویر فاکتور…";try{const canvas=await window.html2canvas($("invoicePreview"),{scale:2,backgroundColor:"#fff",useCORS:true,logging:false}),a=document.createElement("a"),n=($("invoiceNumber").value.trim()||"new").replace(/[^\w\u0600-\u06FF-]/g,"_");a.download=`ForushNameh-invoice-${n}.png`;a.href=canvas.toDataURL("image/png");a.click();status.textContent="تصویر فاکتور آماده شد."}catch(e){status.textContent="ساخت تصویر انجام نشد؛ صفحه را تازه‌سازی و دوباره امتحان کن."}finally{btn.disabled=false}});
- drawItems();preview();drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawDashboard();
+ drawItems();preview();drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawDashboard();drawReports();
  loadCloudData().catch(error=>{const msg="بارگذاری اطلاعات ابری انجام نشد: "+cloudError(error);$("productStatus").textContent=msg;$("customerStatus").textContent=msg;});
 }
 
