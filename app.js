@@ -93,8 +93,8 @@ async function saveBusinessSettings(){
  const address=$("businessAddress").value.trim();
  const default_currency=$("businessCurrency").value;
  const invoice_prefix=$("businessInvoicePrefix").value.trim();
- if(!business_name||!phone||!address||!default_currency||!invoice_prefix){
-  $("businessSettingsStatus").textContent="لطفاً همهٔ فیلدهای الزامی را تکمیل کن.";return;
+ if(!business_name||!default_currency){
+  $("businessSettingsStatus").textContent="نام کسب‌وکار و واحد پول پیش‌فرض را مشخص کن.";return;
  }
  if(invoice_prefix.length>20){$("businessSettingsStatus").textContent="پیشوند شماره فاکتور حداکثر می‌تواند ۲۰ نویسه باشد.";return}
  const btn=$("saveBusinessSettings");btn.disabled=true;
