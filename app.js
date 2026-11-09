@@ -4,7 +4,7 @@ const $ = id => document.getElementById(id);
 const SUPABASE_URL="https://exlvtibujxklnigguzkz.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_rndKASKUTndUiotNPWVxsg_GbylnlX0";
 const BASE_KEYS={invoices:"forushnameh.invoices.v2",products:"forushnameh.products.v1",customers:"forushnameh.customers.v1",movements:"forushnameh.movements.v1"};
-let KEYS={...BASE_KEYS};
+let KEYS=Object.fromEntries(Object.entries(BASE_KEYS).map(([k,v])=>[k,`${v}.signed-out`]));
 let supabaseClient=null;
 let currentUser=null;
 let authMode="login";
@@ -23,6 +23,28 @@ function total(list=items){return list.reduce((s,it)=>s+num(it.quantity)*num(it.
 function today(){const d=new Date();return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`}
 if(!$("invoiceDate").value)$("invoiceDate").value=today();
 function productById(id){return products.find(p=>p.id===id)}
+function mapCloudProduct(row){return {id:row.id,name:row.name,code:row.sku||"",unit:row.unit||"عدد",price:Number(row.sale_price)||0,stock:Number(row.stock_on_hand)||0,minStock:Number(row.min_stock)||0,note:row.note||"",isActive:row.is_active!==false}}
+function mapCloudCustomer(row){return {id:row.id,name:row.name,phone:row.phone||"",email:row.email||"",address:row.address||"",note:row.note||"",isActive:row.is_active!==false}}
+function cloudError(error){return error?.message||"ارتباط با پایگاه داده برقرار نشد."}
+async function loadCloudData(){
+ const requestedUserId=currentUser?.id;
+ if(!supabaseClient||!requestedUserId)return;
+ const [pr,cr,mr]=await Promise.all([
+  supabaseClient.from("products").select("id,name,sku,unit,sale_price,stock_on_hand,min_stock,note,is_active,created_at,updated_at").eq("is_active",true).order("name"),
+  supabaseClient.from("customers").select("id,name,phone,email,address,note,is_active,created_at,updated_at").eq("is_active",true).order("name"),
+  supabaseClient.from("inventory_movements").select("id,product_id,movement_type,quantity_delta,description,reference,occurred_at").order("occurred_at",{ascending:false}).limit(100)
+ ]);
+ // A slower response from a previous account must never overwrite the active account's state.
+ if(currentUser?.id!==requestedUserId)return false;
+ if(pr.error)throw pr.error;if(cr.error)throw cr.error;if(mr.error)throw mr.error;
+ const nextProducts=(pr.data||[]).map(mapCloudProduct),nextCustomers=(cr.data||[]).map(mapCloudCustomer);
+ const nextMovements=(mr.data||[]).map(m=>{const p=nextProducts.find(x=>x.id===m.product_id);return {id:m.id,kind:m.movement_type==="purchase"||m.movement_type==="opening"?"in":m.movement_type==="sale"?"sale":"return",productId:m.product_id,productName:p?.name||"کالای غیرفعال",quantity:Math.abs(Number(m.quantity_delta)||0),description:m.description||"",reference:m.reference||"",date:m.occurred_at}});
+ // Recheck immediately before committing the fetched data to shared application state.
+ if(currentUser?.id!==requestedUserId)return false;
+ products=nextProducts;customers=nextCustomers;movements=nextMovements;
+ drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawDashboard();
+ return true;
+}
 function drawItems(){
  const opts=products.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.code?" ("+esc(p.code)+")":""} — ${fa(p.price)} ${esc($("currency").value)}</option>`).join("");
  $("itemsEditor").innerHTML=items.map((it,i)=>`<div class="item-editor" data-item-id="${it.id}">
@@ -63,43 +85,24 @@ function drawMovements(){
  const host=$("movementsList"); if(!movements.length){host.innerHTML='<p class="helper">هنوز گردش انباری ثبت نشده است.</p>';return}
  host.innerHTML=movements.slice(0,100).map(m=>`<div class="record-row"><div class="record-main"><strong>${esc(m.productName||"کالای حذف‌شده")}</strong><span>${m.kind==="in"?"ورود به انبار":m.kind==="sale"?"خروج بابت فاکتور":"برگشت از فاکتور"} · ${fa(m.quantity)} · ${new Date(m.date).toLocaleString("fa-IR")} ${m.reference?" · "+esc(m.reference):""}${m.description?" · "+esc(m.description):""}</span></div></div>`).join("");
 }
-function receiveStock(){
+async function receiveStock(){
  const id=$("stockProduct").value,qty=num($("stockQuantity").value),desc=$("stockDescription").value.trim(),p=productById(id);
  if(!p){$("stockStatus").textContent="ابتدا یک کالا انتخاب کن.";return}
  if(qty<=0){$("stockStatus").textContent="تعداد ورود باید بیشتر از صفر باشد.";return}
- p.stock=num(p.stock)+qty; movement("in",id,qty,desc,"");
- if(write(KEYS.products,products,"stockStatus")&&write(KEYS.movements,movements,"stockStatus")){
-  $("stockQuantity").value="";$("stockDescription").value="";$("stockStatus").textContent="ورود کالا ثبت شد و موجودی افزایش یافت.";drawProductList();drawMovements();drawDashboard();
- }
+ const requestedUserId=currentUser?.id;if(!requestedUserId)return;
+ const btn=$("receiveStock");btn.disabled=true;$("stockStatus").textContent="در حال ثبت ورود کالا…";
+ try{
+  const {error}=await supabaseClient.rpc("forushnameh_record_stock_movement",{p_product_id:id,p_movement_type:"purchase",p_quantity_delta:qty,p_description:desc,p_reference:"",p_occurred_at:new Date().toISOString()});
+  if(error)throw error;
+  if(currentUser?.id!==requestedUserId)return;
+  $("stockQuantity").value="";$("stockDescription").value="";await loadCloudData();if(currentUser?.id!==requestedUserId)return;$("stockStatus").textContent="ورود کالا در پایگاه داده ثبت شد و موجودی به‌روزرسانی شد.";
+ }catch(error){if(currentUser?.id===requestedUserId)$("stockStatus").textContent="ثبت ورود کالا انجام نشد: "+cloudError(error)}finally{if(currentUser?.id===requestedUserId)btn.disabled=false}
 }
 function drawStockPicker(){
  $("stockProduct").innerHTML='<option value="">انتخاب کالا</option>'+products.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} — موجودی: ${fa(p.stock)} ${esc(p.unit)}</option>`).join("");
 }
 function saveInvoice(){
- const list=read(KEYS.invoices,[]),old=list.find(x=>x.id===editingInvoiceId);
- const candidateItems=items.map(x=>({name:x.name,quantity:num(x.quantity),price:num(x.price),productId:x.productId||""}));
- const effects=stockEffects(candidateItems),tempProducts=products.map(p=>({...p}));
- // Restore the previous stock impact when editing a version-4 invoice.
- if(old&&old.stockApplied&&Array.isArray(old.stockEffects)){
-  old.stockEffects.forEach(e=>{const p=tempProducts.find(x=>x.id===e.productId);if(p)p.stock=num(p.stock)+num(e.quantity)});
- }
- for(const e of effects){
-  const p=tempProducts.find(x=>x.id===e.productId);
-  if(!p){$("savedStatus").textContent="یکی از کالاهای انتخاب‌شده دیگر در فهرست نیست؛ فاکتور را اصلاح کن.";return}
-  if(num(p.stock)<e.quantity){$("savedStatus").textContent=`موجودی «${p.name}» کافی نیست. موجودی: ${fa(p.stock)}، مقدار فاکتور: ${fa(e.quantity)}.`;return}
-  p.stock=num(p.stock)-e.quantity;
- }
- const obj={id:editingInvoiceId||`inv-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,data:invoiceData(),items:candidateItems,updatedAt:Date.now(),stockApplied:true,stockEffects:effects};
- if(old&&old.stockApplied&&Array.isArray(old.stockEffects)){
-  old.stockEffects.forEach(e=>{const p=productById(e.productId);if(p)movement("return",e.productId,e.quantity,`اصلاح فاکتور ${obj.data.invoiceNumber}`,obj.data.invoiceNumber)});
- }
- effects.forEach(e=>movement("sale",e.productId,e.quantity,`فروش با فاکتور ${obj.data.invoiceNumber}`,obj.data.invoiceNumber));
- const previousProducts=products; products=tempProducts;
- const i=list.findIndex(x=>x.id===obj.id);if(i>=0)list[i]=obj;else list.push(obj);
- if(!write(KEYS.products,products,"savedStatus")){products=previousProducts;return}
- if(!write(KEYS.invoices,list,"savedStatus")){products=previousProducts;write(KEYS.products,products,"savedStatus");$("savedStatus").textContent="ذخیره فاکتور ناموفق بود؛ موجودی قبلی بازگردانده شد.";return}
- write(KEYS.movements,movements,"savedStatus");
- editingInvoiceId=obj.id;if(window.showForushnamehPage)window.showForushnamehPage("saved");$("savedStatus").textContent="فاکتور ذخیره شد و موجودی کالاها به‌روزرسانی شد.";drawInvoices();drawProductList();drawStockPicker();drawMovements();drawDashboard();
+ $("savedStatus").textContent="اتصال صدور فاکتور به پایگاه داده ابری در مرحلهٔ بعد تکمیل می‌شود؛ فعلاً ذخیرهٔ فاکتور غیرفعال است.";
 }
 function loadInvoice(id){
  const x=read(KEYS.invoices,[]).find(a=>a.id===id);if(!x)return;
@@ -115,22 +118,33 @@ function newInvoice(){
 }
 function drawProductList(){
  const q=($("productSearch").value||"").trim().toLowerCase(),host=$("productsList");
- const found=products.filter(p=>(p.name+" "+p.code).toLowerCase().includes(q));
+ const found=products.filter(p=>p.isActive!==false&&(p.name+" "+p.code).toLowerCase().includes(q));
  if(!found.length){host.innerHTML='<p class="helper">کالایی ثبت نشده است.</p>';return}
  host.innerHTML=found.map(p=>`<div class="record-row"><div class="record-main"><strong>${esc(p.name)}</strong><span>${esc(p.code||"بدون کد")} · ${fa(p.price)} · موجودی: ${fa(p.stock)} ${esc(p.unit)}${p.stock<=p.minStock?' · <b class="low-stock">موجودی کم</b>':""}</span></div><div class="record-actions"><button class="button button-light" data-edit-product="${esc(p.id)}">ویرایش</button><button class="button button-danger" data-delete-product="${esc(p.id)}">حذف</button></div></div>`).join("");
 }
 function clearProductForm(){editingProductId=null;$("productStock").disabled=false;["productName","productCode","productPrice","productStock","productMinStock","productNote"].forEach(id=>$(id).value="");$("productUnit").value="عدد";$("saveProduct").textContent="ثبت کالا";$("cancelProductEdit").hidden=true}
-function saveProduct(){
+async function saveProduct(){
  const name=$("productName").value.trim();if(!name){$("productStatus").textContent="لطفاً نام کالا را وارد کن.";return}
  const code=$("productCode").value.trim(),duplicate=products.find(p=>p.code&&code&&p.code.toLowerCase()===code.toLowerCase()&&p.id!==editingProductId);
  if(duplicate){$("productStatus").textContent="این کد کالا قبلاً ثبت شده است.";return}
- const p={id:editingProductId||`prd-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,name,code,unit:$("productUnit").value,price:num($("productPrice").value),stock:editingProductId?num(productById(editingProductId)?.stock):num($("productStock").value),minStock:num($("productMinStock").value),note:$("productNote").value.trim()};
- const i=products.findIndex(x=>x.id===p.id);if(i>=0)products[i]=p;else products.push(p);
- if(write(KEYS.products,products,"productStatus")){$("productStatus").textContent="کالا ذخیره شد.";clearProductForm();drawProductList();drawItems();drawStockPicker();drawDashboard()}
+ const requestedUserId=currentUser?.id;if(!requestedUserId)return;
+ const initialStock=editingProductId?0:num($("productStock").value);
+ const payload={name,sku:code||null,unit:$("productUnit").value,sale_price:num($("productPrice").value),min_stock:num($("productMinStock").value),note:$("productNote").value.trim(),is_active:true};
+ const btn=$("saveProduct");btn.disabled=true;$("productStatus").textContent="در حال ذخیره کالا در فضای ابری…";
+ try{
+  let saved;
+  if(editingProductId){const {data,error}=await supabaseClient.from("products").update(payload).eq("id",editingProductId).select("id").single();if(error)throw error;saved=data}
+  else{const {data,error}=await supabaseClient.from("products").insert({...payload,user_id:requestedUserId}).select("id").single();if(error)throw error;saved=data}
+  let openingError=null;
+  if(!editingProductId&&initialStock>0){const {error}=await supabaseClient.rpc("forushnameh_record_stock_movement",{p_product_id:saved.id,p_movement_type:"opening",p_quantity_delta:initialStock,p_description:"موجودی اولیه",p_reference:"",p_occurred_at:new Date().toISOString()});openingError=error}
+  if(currentUser?.id!==requestedUserId)return;
+  clearProductForm();await loadCloudData();if(currentUser?.id!==requestedUserId)return;
+  $("productStatus").textContent=openingError?"کالا ذخیره شد، اما ثبت موجودی اولیه انجام نشد: "+cloudError(openingError):"کالا با موفقیت در پایگاه داده ابری ذخیره شد.";
+ }catch(error){if(currentUser?.id===requestedUserId)$("productStatus").textContent="ذخیره کالا انجام نشد: "+cloudError(error)}finally{if(currentUser?.id===requestedUserId)btn.disabled=false}
 }
 function editProduct(id){if(window.showForushnamehPage)window.showForushnamehPage("products");const p=productById(id);if(!p)return;editingProductId=id;$("productStock").disabled=true;$("productName").value=p.name;$("productCode").value=p.code;$("productUnit").value=p.unit;$("productPrice").value=p.price;$("productStock").value=p.stock;$("productMinStock").value=p.minStock;$("productNote").value=p.note||"";$("saveProduct").textContent="ذخیرهٔ تغییرات";$("cancelProductEdit").hidden=false}
 function drawCustomerList(){
- const q=($("customerSearch").value||"").trim().toLowerCase(),host=$("customersList"),found=customers.filter(c=>(c.name+" "+c.phone).toLowerCase().includes(q));
+ const q=($("customerSearch").value||"").trim().toLowerCase(),host=$("customersList"),found=customers.filter(c=>c.isActive!==false&&(c.name+" "+c.phone).toLowerCase().includes(q));
  if(!found.length){host.innerHTML='<p class="helper">مشتری‌ای ثبت نشده است.</p>';return}
  host.innerHTML=found.map(c=>`<div class="record-row"><div class="record-main"><strong>${esc(c.name)}</strong><span>${esc(c.phone||"بدون تلفن")}${c.email?" · "+esc(c.email):""}</span></div><div class="record-actions"><button class="button button-light" data-edit-customer="${esc(c.id)}">ویرایش</button><button class="button button-danger" data-delete-customer="${esc(c.id)}">حذف</button></div></div>`).join("");
 }
@@ -140,11 +154,17 @@ function drawCustomerPicker(){
  if(customers.some(c=>c.id===current))sel.value=current;
 }
 function clearCustomerForm(){editingCustomerId=null;["customerRecordName","customerRecordPhone","customerRecordEmail","customerRecordAddress"].forEach(id=>$(id).value="");$("saveCustomer").textContent="ثبت مشتری";$("cancelCustomerEdit").hidden=true}
-function saveCustomer(){
+async function saveCustomer(){
  const name=$("customerRecordName").value.trim();if(!name){$("customerStatus").textContent="لطفاً نام مشتری را وارد کن.";return}
- const c={id:editingCustomerId||`cus-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,name,phone:$("customerRecordPhone").value.trim(),email:$("customerRecordEmail").value.trim(),address:$("customerRecordAddress").value.trim()};
- const i=customers.findIndex(x=>x.id===c.id);if(i>=0)customers[i]=c;else customers.push(c);
- if(write(KEYS.customers,customers,"customerStatus")){$("customerStatus").textContent="مشتری ذخیره شد.";clearCustomerForm();drawCustomerList();drawCustomerPicker();drawDashboard()}
+ const requestedUserId=currentUser?.id;if(!requestedUserId)return;
+ const payload={name,phone:$("customerRecordPhone").value.trim(),email:$("customerRecordEmail").value.trim(),address:$("customerRecordAddress").value.trim(),is_active:true};
+ const btn=$("saveCustomer");btn.disabled=true;$("customerStatus").textContent="در حال ذخیره مشتری در فضای ابری…";
+ try{
+  if(editingCustomerId){const {error}=await supabaseClient.from("customers").update(payload).eq("id",editingCustomerId);if(error)throw error}
+  else{const {error}=await supabaseClient.from("customers").insert({...payload,user_id:requestedUserId});if(error)throw error}
+  if(currentUser?.id!==requestedUserId)return;
+  clearCustomerForm();await loadCloudData();if(currentUser?.id!==requestedUserId)return;$("customerStatus").textContent="مشتری با موفقیت در پایگاه داده ابری ذخیره شد.";
+ }catch(error){if(currentUser?.id===requestedUserId)$("customerStatus").textContent="ذخیره مشتری انجام نشد: "+cloudError(error)}finally{if(currentUser?.id===requestedUserId)btn.disabled=false}
 }
 function editCustomer(id){if(window.showForushnamehPage)window.showForushnamehPage("customers");const c=customers.find(x=>x.id===id);if(!c)return;editingCustomerId=id;$("customerRecordName").value=c.name;$("customerRecordPhone").value=c.phone;$("customerRecordEmail").value=c.email;$("customerRecordAddress").value=c.address;$("saveCustomer").textContent="ذخیرهٔ تغییرات";$("cancelCustomerEdit").hidden=false}
 function backupExport(){
@@ -154,6 +174,9 @@ function backupExport(){
 }
 async function backupImport(file){
  if(!file)return;
+ $("backupStatus").textContent="بازیابی پشتیبان در فضای ابری در مرحلهٔ بعد اضافه می‌شود؛ در حال حاضر فقط خروجی گرفتن فعال است.";
+ $("importData").value="";
+ return;
  try{
   const x=JSON.parse(await file.text());
   if(x.app!=="ForushNameh"||!Array.isArray(x.invoices)||!Array.isArray(x.products)||!Array.isArray(x.customers))throw Error("invalid");
@@ -215,12 +238,13 @@ function init(){
  $("saveInvoice").addEventListener("click",saveInvoice);$("newInvoice").addEventListener("click",newInvoice);
  $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]"),d=e.target.closest("[data-delete-invoice]");if(o){loadInvoice(o.dataset.openInvoice);return}if(d&&confirm("این فاکتور حذف شود؟ در صورت ثبت گردش انبار، موجودی کالاها نیز برگردانده می‌شود.")){const all=read(KEYS.invoices,[]),target=all.find(x=>x.id===d.dataset.deleteInvoice);if(target&&target.stockApplied&&Array.isArray(target.stockEffects)){target.stockEffects.forEach(e=>{const p=productById(e.productId);if(p){p.stock=num(p.stock)+num(e.quantity);movement("return",e.productId,e.quantity,`حذف فاکتور ${target.data.invoiceNumber}`,target.data.invoiceNumber)}});write(KEYS.products,products,"savedStatus");write(KEYS.movements,movements,"savedStatus")}write(KEYS.invoices,all.filter(x=>x.id!==d.dataset.deleteInvoice),"savedStatus");drawInvoices();drawProductList();drawStockPicker();drawMovements();drawDashboard()}});
  $("saveProduct").addEventListener("click",saveProduct);$("cancelProductEdit").addEventListener("click",clearProductForm);$("productSearch").addEventListener("input",drawProductList);
- $("productsList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-product]"),del=e.target.closest("[data-delete-product]");if(edit){editProduct(edit.dataset.editProduct);return}if(del&&confirm("این کالا حذف شود؟ فاکتورهای قبلی تغییر نمی‌کنند.")){products=products.filter(p=>p.id!==del.dataset.deleteProduct);write(KEYS.products,products,"productStatus");drawProductList();drawItems();drawStockPicker();drawDashboard()}});
+ $("productsList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-product]"),del=e.target.closest("[data-delete-product]");if(edit){editProduct(edit.dataset.editProduct);return}if(del&&confirm("این کالا غیرفعال شود؟ سوابق انبار و فاکتورهای مرتبط حفظ می‌شوند.")){(async()=>{const requestedUserId=currentUser?.id;if(!requestedUserId)return;try{const {error}=await supabaseClient.from("products").update({is_active:false}).eq("id",del.dataset.deleteProduct);if(currentUser?.id!==requestedUserId)return;if(error)throw error;await loadCloudData();if(currentUser?.id===requestedUserId)$("productStatus").textContent="کالا غیرفعال شد؛ سوابق آن حفظ شده است."}catch(error){if(currentUser?.id===requestedUserId)$("productStatus").textContent="غیرفعال‌سازی کالا انجام نشد: "+cloudError(error)}})()}});
  $("saveCustomer").addEventListener("click",saveCustomer);$("cancelCustomerEdit").addEventListener("click",clearCustomerForm);$("customerSearch").addEventListener("input",drawCustomerList);
- $("customersList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-customer]"),del=e.target.closest("[data-delete-customer]");if(edit){editCustomer(edit.dataset.editCustomer);return}if(del&&confirm("این مشتری حذف شود؟ فاکتورهای قبلی تغییر نمی‌کنند.")){customers=customers.filter(c=>c.id!==del.dataset.deleteCustomer);write(KEYS.customers,customers,"customerStatus");drawCustomerList();drawCustomerPicker();drawDashboard()}});
+ $("customersList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-customer]"),del=e.target.closest("[data-delete-customer]");if(edit){editCustomer(edit.dataset.editCustomer);return}if(del&&confirm("این مشتری غیرفعال شود؟ سوابق فاکتورهای مرتبط حفظ می‌شوند.")){(async()=>{const requestedUserId=currentUser?.id;if(!requestedUserId)return;try{const {error}=await supabaseClient.from("customers").update({is_active:false}).eq("id",del.dataset.deleteCustomer);if(currentUser?.id!==requestedUserId)return;if(error)throw error;await loadCloudData();if(currentUser?.id===requestedUserId)$("customerStatus").textContent="مشتری غیرفعال شد؛ سوابق آن حفظ شده است."}catch(error){if(currentUser?.id===requestedUserId)$("customerStatus").textContent="غیرفعال‌سازی مشتری انجام نشد: "+cloudError(error)}})()}});
  $("receiveStock").addEventListener("click",receiveStock);$("exportData").addEventListener("click",backupExport);$("importData").addEventListener("change",e=>backupImport(e.target.files[0]));
  $("downloadPng").addEventListener("click",async()=>{const btn=$("downloadPng"),status=$("statusMessage");if(typeof window.html2canvas!=="function"){status.textContent="ابزار ساخت تصویر بارگذاری نشده است؛ اتصال اینترنت را بررسی کن.";return}btn.disabled=true;status.textContent="در حال آماده‌سازی تصویر فاکتور…";try{const canvas=await window.html2canvas($("invoicePreview"),{scale:2,backgroundColor:"#fff",useCORS:true,logging:false}),a=document.createElement("a"),n=($("invoiceNumber").value.trim()||"new").replace(/[^\w\u0600-\u06FF-]/g,"_");a.download=`ForushNameh-invoice-${n}.png`;a.href=canvas.toDataURL("image/png");a.click();status.textContent="تصویر فاکتور آماده شد."}catch(e){status.textContent="ساخت تصویر انجام نشد؛ صفحه را تازه‌سازی و دوباره امتحان کن."}finally{btn.disabled=false}});
- drawItems();preview();drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawDashboard();drawDashboard();
+ drawItems();preview();drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawDashboard();
+ loadCloudData().catch(error=>{const msg="بارگذاری اطلاعات ابری انجام نشد: "+cloudError(error);$("productStatus").textContent=msg;$("customerStatus").textContent=msg;});
 }
 
 function setAuthMode(mode){
@@ -237,16 +261,30 @@ function setAuthMode(mode){
  $("authStatus").textContent="";
 }
 function showAuthMessage(message,isError=false){const el=$("authStatus");el.textContent=message;el.classList.toggle("error",isError)}
+function resetUserWorkspace(){
+ products=[];customers=[];movements=[];
+ editingInvoiceId=null;editingProductId=null;editingCustomerId=null;
+ items=[{id:1,name:"",quantity:1,price:0,productId:""}];nextItemId=2;
+ invoiceFields.forEach(id=>{if($(id))$(id).value=""});
+ $("invoiceDate").value=today();$("currency").value="تومان";$("customerPicker").value="";
+ clearProductForm();clearCustomerForm();
+ $("productSearch").value="";$("customerSearch").value="";
+ ["productStatus","customerStatus","stockStatus","savedStatus","backupStatus","statusMessage"].forEach(id=>$(id).textContent="");
+ $("stockQuantity").value="";$("stockDescription").value="";
+ drawItems();preview();drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawDashboard();
+}
 function showAuthenticatedApp(user){
- currentUser=user;document.querySelector("main.page").hidden=false;
+ const switchingAccount=!!currentUser?.id&&currentUser.id!==user.id;
  KEYS=Object.fromEntries(Object.entries(BASE_KEYS).map(([k,v])=>[k,`${v}.${user.id}`]));
- products=read(KEYS.products,[]);customers=read(KEYS.customers,[]);movements=read(KEYS.movements,[]);
+ if(switchingAccount)resetUserWorkspace();
+ currentUser=user;document.querySelector("main.page").hidden=false;
  $("authScreen").hidden=true;$("accountEmail").hidden=false;$("accountEmail").textContent=user.email||"حساب کاربری";$("signOutButton").hidden=false;
  if(!window.forushnamehInitialized){init();window.forushnamehInitialized=true}
- else{drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawDashboard()}
+ else{drawInvoices();loadCloudData().catch(error=>{if(currentUser?.id===user.id)alert("بارگذاری اطلاعات ابری انجام نشد: "+cloudError(error))})}
 }
 function showSignedOut(){
- currentUser=null;$("authScreen").hidden=false;$("authPassword").value="";$("authConfirmPassword").value="";$("accountEmail").hidden=true;$("signOutButton").hidden=true;
+ currentUser=null;KEYS=Object.fromEntries(Object.entries(BASE_KEYS).map(([k,v])=>[k,`${v}.signed-out`]));resetUserWorkspace();
+ $("authScreen").hidden=false;$("authPassword").value="";$("authConfirmPassword").value="";$("accountEmail").hidden=true;$("signOutButton").hidden=true;
  document.querySelector("main.page").hidden=true;setAuthMode("login");
 }
 async function handleAuthSubmit(event){
