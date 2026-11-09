@@ -171,3 +171,5 @@ body{background:#f4f7fb;color:var(--ink)}
 
 .legal-section{border-top:1px solid #e8edf4}.legal-copy{max-width:850px;margin:auto;background:#fff;border:1px solid #e5ebf3;border-radius:17px;padding:24px 28px}.legal-copy p{font-size:12px;line-height:2.3;color:#718198;margin:0 0 14px}.legal-copy p:last-child{margin-bottom:0}
 @media(max-width:650px){.legal-copy{padding:18px}}
+
+.standalone-page{min-height:58vh;padding-top:60px;padding-bottom:75px}.standalone-page h1{font-size:clamp(28px,4vw,42px);color:#173e75;margin:0 0 20px}.standalone-page h2{font-size:20px;color:#24466f;margin:28px 0 12px}.standalone-page>p,.standalone-page li{font-size:14px;line-height:2.3;color:#718198;max-width:850px}.standalone-page ul{padding-right:22px;margin-bottom:30px}.standalone-page .contact-note{max-width:720px;margin:24px 0}.standalone-faq{max-width:900px;margin:25px 0 30px}.standalone-page .legal-copy{margin:20px 0;max-width:900px}
