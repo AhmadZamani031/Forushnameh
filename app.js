@@ -358,7 +358,7 @@ async function backupImport(file){
 
 
 function drawDashboard(){
- const invoices=cloudInvoices;
+ const invoices=cloudInvoices.filter(x=>x.status==="issued");
  const sales=invoices.reduce((sum,x)=>sum+(Number(x.totalAmount)||0),0);
  $("dashSales").textContent=fa(sales);
  $("dashSalesCurrency").textContent=invoices[0]?.data?.currency||"تومان";
@@ -374,13 +374,13 @@ function drawDashboard(){
  drawReports();
 }
 
-function parseInvoiceDate(value){const raw=String(value||"").slice(0,10),m=raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return null;const d=new Date(+m[1],+m[2]-1,+m[3]);return Number.isNaN(d.getTime())?null:d}
+function parseInvoiceDate(value){const raw=String(value||"").slice(0,10),m=raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return null;const y=Number(m[1]),month=Number(m[2]),day=Number(m[3]),d=new Date(y,month-1,day);return d.getFullYear()===y&&d.getMonth()===month-1&&d.getDate()===day?d:null}
 function drawReports(){
  const periodEl=$("reportPeriod"),currencyEl=$("reportCurrency");if(!periodEl||!currencyEl)return;
  const currencies=[...new Set(cloudInvoices.map(x=>x.data?.currency||"تومان"))].sort(),old=currencyEl.value;
  currencyEl.innerHTML=currencies.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("");
  currencyEl.value=currencies.includes(old)?old:(currencies.includes(businessSettings?.default_currency)?businessSettings.default_currency:(currencies[0]||""));
- const currency=currencyEl.value||businessSettings?.default_currency||currencies[0]||"تومان",all=cloudInvoices.filter(x=>(x.data?.currency||"تومان")===currency),now=new Date(),period=periodEl.value;
+ const currency=currencyEl.value||businessSettings?.default_currency||currencies[0]||"تومان",all=cloudInvoices.filter(x=>x.status==="issued"&&(x.data?.currency||"تومان")===currency),now=new Date(),period=periodEl.value;
  let start=null;if(period==="month")start=new Date(now.getFullYear(),now.getMonth(),1);else if(period==="30days")start=new Date(now.getFullYear(),now.getMonth(),now.getDate()-29);else if(period==="year")start=new Date(now.getFullYear(),0,1);
  const scoped=all.filter(x=>{const d=parseInvoiceDate(x.data?.invoiceDate);return !start||(d&&d>=start&&d<=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59,999))});
  const sales=scoped.reduce((a,x)=>a+(Number(x.totalAmount)||0),0);
