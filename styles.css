@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
-:root{--green:#173f35;--green2:#245c4c;--mint:#e9f4ee;--ink:#1f2c28;--muted:#6d7b75;--line:#e3e9e5;--orange:#c87942;font-family:"Vazirmatn",Tahoma,sans-serif}
+:root{--green:#174b91;--green2:#245f9e;--mint:#eaf3fc;--ink:#1f2c28;--muted:#6d7b8d;--line:#e3e9f0;--orange:#1a9b83;font-family:"Vazirmatn",Tahoma,sans-serif}
 *{box-sizing:border-box}body{margin:0;color:var(--ink);background:#f5f7f5;font-family:"Vazirmatn",Tahoma,sans-serif}button,input,textarea,select{font:inherit}
 .topbar{height:78px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 max(24px,calc((100vw - 1240px)/2))}
 .brand-mark,.invoice-symbol{display:grid;place-items:center;background:var(--green);color:#fff;font-weight:800}.brand-mark{width:42px;height:42px;border-radius:14px;font-size:24px}.brand-name{font-weight:800;font-size:18px}.brand-subtitle{font-size:12px;color:var(--muted)}.version{margin-right:auto;color:var(--green2);background:var(--mint);padding:7px 12px;border-radius:20px;font-size:12px}
@@ -222,3 +222,27 @@ body{background:#f4f7fb;color:var(--ink)}
 @media(max-width:900px){.public-hero{grid-template-columns:1fr;gap:12px;padding-top:38px}.public-hero-copy{max-width:720px}.public-hero-visual{min-height:300px}.hero-product-illustration{max-width:520px;margin:auto}}
 @media(max-width:600px){.public-hero{padding:28px 18px 46px}.public-hero-visual{min-height:250px}.public-section{padding:54px 18px}.public-header{padding:8px 15px}.public-brand img{width:160px}.saved-actions .button{flex:1 1 100%}.auth-logo{width:min(210px,75%)}}
 @media(prefers-reduced-motion:reduce){.hero-product-illustration,.feature-card{animation:none;transition:none}}
+
+/* نمودارهای گزارش و هماهنگی رنگی */
+.report-chart-grid{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:14px;margin:0 0 14px}
+.report-list-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.report-line-chart{min-height:230px;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.report-line-chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart-footnote{font-size:10px;color:var(--muted);text-align:center}
+.report-volume-chart{height:230px;display:flex;align-items:stretch;gap:8px;padding-top:12px}
+.volume-item{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:end;gap:7px}
+.volume-item strong{font-size:10px;color:#526783}
+.volume-track{height:150px;width:100%;display:flex;align-items:end;background:#f1f5fa;border-radius:8px 8px 3px 3px;overflow:hidden}
+.volume-track span{display:block;width:100%;background:linear-gradient(#1a9b83,#174b91);border-radius:8px 8px 0 0}
+.volume-item small{font-size:10px;color:#8a97a9;white-space:nowrap}
+.report-share-chart{min-height:230px;display:flex;align-items:center;justify-content:center;gap:17px}
+.share-ring{width:142px;height:142px;flex:0 0 142px;border-radius:50%;display:grid;place-items:center;position:relative}
+.share-ring:before{content:"";position:absolute;inset:23px;border-radius:50%;background:white}
+.share-ring span{position:relative;z-index:1;font-size:12px;font-weight:800;color:#24466f;text-align:center;max-width:92px;overflow-wrap:anywhere}
+.share-legend{min-width:0;display:grid;gap:10px}
+.share-legend>div{display:grid;grid-template-columns:9px minmax(0,1fr) auto;align-items:center;gap:6px;font-size:10px;color:#526783}
+.share-legend i{width:9px;height:9px;border-radius:3px}
+.share-legend span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:105px}
+.share-legend b{font-size:10px;white-space:nowrap}
+@media(max-width:1050px){.report-chart-grid{grid-template-columns:1fr 1fr}.report-chart-grid>section:first-child{grid-column:1/-1}}
+@media(max-width:650px){.report-chart-grid,.report-list-grid{grid-template-columns:1fr}.report-chart-grid>section:first-child{grid-column:auto}.report-share-chart{gap:12px}.share-ring{width:120px;height:120px;flex-basis:120px}.share-legend span{max-width:150px}}
