@@ -411,6 +411,7 @@ function showSignedOut(){
 }
 async function handleAuthSubmit(event){
  event.preventDefault();const email=$("authEmail").value.trim(),password=$("authPassword").value,name=$("authFullName").value.trim();
+ if(!supabaseClient){showAuthMessage("اتصال ورود در دسترس نیست؛ صفحه را تازه‌سازی و اتصال اینترنت را بررسی کن.",true);return}
  if(!email){showAuthMessage("ایمیل را وارد کن.",true);return}
  if(authMode!=="reset"&&password.length<8){showAuthMessage("رمز عبور باید حداقل ۸ نویسه داشته باشد.",true);return}
  if((authMode==="signup"||authMode==="updatepassword")&&password!==$("authConfirmPassword").value){showAuthMessage("تکرار رمز عبور با رمز اصلی یکسان نیست.",true);return}
