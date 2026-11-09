@@ -12,7 +12,7 @@ let recoveryMode=false;
 const invoiceFields=["storeName","storePhone","storeAddress","customerName","customerPhone","invoiceNumber","invoiceDate","currency","notes"];
 let items=[{id:1,name:"محصول نمونه",quantity:1,price:250000,productId:""},{id:2,name:"خدمات",quantity:2,price:50000,productId:""}];
 let nextItemId=3, editingInvoiceId=null, editingProductId=null, editingCustomerId=null;
-let products=[], customers=[], movements=[], cloudInvoices=[];
+let products=[], customers=[], movements=[], cloudInvoices=[], businessSettings=null;
 function read(key,fallback){try{const x=JSON.parse(localStorage.getItem(key)||"null");return Array.isArray(x)?x:fallback}catch(e){return fallback}}
 function write(key,value,statusId){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(e){if(statusId)$(statusId).textContent="ذخیره انجام نشد؛ فضای ذخیره‌سازی مرورگر ممکن است کافی نباشد.";return false}}
 function fa(n){return new Intl.NumberFormat("fa-IR",{maximumFractionDigits:2}).format(Number(n)||0)}
@@ -45,6 +45,8 @@ async function loadCloudData(){
  drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();
  await loadCloudInvoices(requestedUserId);
  if(currentUser?.id!==requestedUserId)return false;
+ try{await loadBusinessSettings(requestedUserId)}catch(settingsError){$("businessSettingsStatus").textContent="بارگذاری تنظیمات انجام نشد: "+cloudError(settingsError)}
+ if(currentUser?.id!==requestedUserId)return false;
  drawDashboard();
  return true;
 }
@@ -59,6 +61,63 @@ async function loadCloudInvoices(requestedUserId=currentUser?.id){
  itemRows.forEach(row=>{if(!grouped.has(row.invoice_id))grouped.set(row.invoice_id,[]);grouped.get(row.invoice_id).push({id:row.id,name:row.description||"",quantity:Number(row.quantity)||0,price:Number(row.unit_price)||0,productId:row.product_id||"",unit:row.unit||"عدد"})});
  cloudInvoices=(rows||[]).map(row=>({id:row.id,status:row.status,totalAmount:Number(row.total_amount)||0,data:{invoiceNumber:row.invoice_number||"",invoiceDate:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at}));
  drawInvoices();return true;
+}
+
+async function loadBusinessSettings(requestedUserId=currentUser?.id){
+ if(!supabaseClient||!requestedUserId)return false;
+ const {data,error}=await supabaseClient.from("business_settings")
+  .select("user_id,business_name,phone,address,default_currency,invoice_prefix,next_invoice_number")
+  .eq("user_id",requestedUserId).maybeSingle();
+ if(currentUser?.id!==requestedUserId)return false;
+ if(error)throw error;
+ if(!data)throw new Error("تنظیمات کسب‌وکار برای این حساب پیدا نشد.");
+ businessSettings=data;
+ $("businessName").value=data.business_name||"";
+ $("businessPhone").value=data.phone||"";
+ $("businessAddress").value=data.address||"";
+ $("businessCurrency").value=data.default_currency||"تومان";
+ $("businessInvoicePrefix").value=data.invoice_prefix||"";
+ $("businessNextNumber").textContent=fa(data.next_invoice_number);
+ $("storeName").value=data.business_name||"";
+ $("storePhone").value=data.phone||"";
+ $("storeAddress").value=data.address||"";
+ $("currency").value=data.default_currency||"تومان";
+ drawItems();preview();
+ return true;
+}
+async function saveBusinessSettings(){
+ const requestedUserId=currentUser?.id;
+ if(!supabaseClient||!requestedUserId)return;
+ const business_name=$("businessName").value.trim();
+ const phone=$("businessPhone").value.trim();
+ const address=$("businessAddress").value.trim();
+ const default_currency=$("businessCurrency").value;
+ const invoice_prefix=$("businessInvoicePrefix").value.trim();
+ if(!business_name||!phone||!address||!default_currency||!invoice_prefix){
+  $("businessSettingsStatus").textContent="لطفاً همهٔ فیلدهای الزامی را تکمیل کن.";return;
+ }
+ if(invoice_prefix.length>20){$("businessSettingsStatus").textContent="پیشوند شماره فاکتور حداکثر می‌تواند ۲۰ نویسه باشد.";return}
+ const btn=$("saveBusinessSettings");btn.disabled=true;
+ $("businessSettingsStatus").textContent="در حال ذخیرهٔ تنظیمات در فضای ابری…";
+ try{
+  const {data,error}=await supabaseClient.from("business_settings")
+   .update({business_name,phone,address,default_currency,invoice_prefix})
+   .eq("user_id",requestedUserId)
+   .select("user_id,business_name,phone,address,default_currency,invoice_prefix,next_invoice_number")
+   .single();
+  if(error)throw error;
+  if(currentUser?.id!==requestedUserId)return;
+  businessSettings=data;
+  $("businessNextNumber").textContent=fa(data.next_invoice_number);
+  $("storeName").value=data.business_name;$("storePhone").value=data.phone;
+  $("storeAddress").value=data.address;$("currency").value=data.default_currency;
+  drawItems();preview();
+  $("businessSettingsStatus").textContent="تنظیمات کسب‌وکار با موفقیت در فضای ابری ذخیره شد و در فاکتورهای جدید استفاده می‌شود.";
+ }catch(error){
+  if(currentUser?.id===requestedUserId)$("businessSettingsStatus").textContent="ذخیرهٔ تنظیمات انجام نشد: "+cloudError(error);
+ }finally{
+  if(currentUser?.id===requestedUserId)btn.disabled=false;
+ }
 }
 
 function drawItems(){
@@ -150,6 +209,7 @@ function loadInvoice(id){
 function newInvoice(){
  $("customerPicker").value="";invoiceFields.forEach(k=>{if(k==="storeName"||k==="currency")return;$(k).value=""});
  $("invoiceDate").value=today();$("invoiceNumber").value="";
+ if(businessSettings){$("storeName").value=businessSettings.business_name||"";$("storePhone").value=businessSettings.phone||"";$("storeAddress").value=businessSettings.address||"";$("currency").value=businessSettings.default_currency||"تومان"}
  items=[{id:1,name:"",quantity:1,price:0,productId:""}];nextItemId=2;editingInvoiceId=null;drawItems();preview();$("savedStatus").textContent="فاکتور جدید آماده است.";
 }
 
@@ -273,6 +333,7 @@ function init(){
  $("currency").addEventListener("change",()=>{drawItems();preview()});
  $("customerPicker").addEventListener("change",()=>{const c=customers.find(x=>x.id===$("customerPicker").value);if(c){$("customerName").value=c.name;$("customerPhone").value=c.phone;$("previewCustomerName").textContent=c.name;$("previewCustomerPhone").textContent=c.phone?`تلفن: ${c.phone}`:""}});
  $("saveInvoice").addEventListener("click",saveInvoice);$("newInvoice").addEventListener("click",newInvoice);
+ $("saveBusinessSettings").addEventListener("click",saveBusinessSettings);
  $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]");if(o)loadInvoice(o.dataset.openInvoice)});
  $("saveProduct").addEventListener("click",saveProduct);$("cancelProductEdit").addEventListener("click",clearProductForm);$("productSearch").addEventListener("input",drawProductList);
  $("productsList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-product]"),del=e.target.closest("[data-delete-product]");if(edit){editProduct(edit.dataset.editProduct);return}if(del&&confirm("این کالا غیرفعال شود؟ سوابق انبار و فاکتورهای مرتبط حفظ می‌شوند.")){(async()=>{const requestedUserId=currentUser?.id;if(!requestedUserId)return;try{const {error}=await supabaseClient.from("products").update({is_active:false}).eq("id",del.dataset.deleteProduct);if(currentUser?.id!==requestedUserId)return;if(error)throw error;await loadCloudData();if(currentUser?.id===requestedUserId)$("productStatus").textContent="کالا غیرفعال شد؛ سوابق آن حفظ شده است."}catch(error){if(currentUser?.id===requestedUserId)$("productStatus").textContent="غیرفعال‌سازی کالا انجام نشد: "+cloudError(error)}})()}});
@@ -299,7 +360,7 @@ function setAuthMode(mode){
 }
 function showAuthMessage(message,isError=false){const el=$("authStatus");el.textContent=message;el.classList.toggle("error",isError)}
 function resetUserWorkspace(){
- products=[];customers=[];movements=[];cloudInvoices=[];
+ products=[];customers=[];movements=[];cloudInvoices=[];businessSettings=null;
  editingInvoiceId=null;editingProductId=null;editingCustomerId=null;
  items=[{id:1,name:"",quantity:1,price:0,productId:""}];nextItemId=2;
  invoiceFields.forEach(id=>{if($(id))$(id).value=""});
