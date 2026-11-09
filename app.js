@@ -296,10 +296,10 @@ async function backupExport(){
  const btn=$("exportData");btn.disabled=true;
  $("backupStatus").textContent="در حال دریافت همهٔ اطلاعات از فضای ابری…";
  try{
-  async function fetchAll(table,columns){
+  async function fetchAll(table,columns,identityColumn="id"){
    const result=[];let from=0;const pageSize=1000;
    while(true){
-    const {data,error}=await supabaseClient.from(table).select(columns).order("created_at",{ascending:true}).order("id",{ascending:true}).range(from,from+pageSize-1);
+    const {data,error}=await supabaseClient.from(table).select(columns).order("created_at",{ascending:true}).order(identityColumn,{ascending:true}).range(from,from+pageSize-1);
     if(error)throw error;
     const batch=data||[];result.push(...batch);
     if(batch.length<pageSize)break;
@@ -307,12 +307,14 @@ async function backupExport(){
    }
    return result;
   }
-  const [productRows,customerRows,movementRows,invoiceRows,itemRows]=await Promise.all([
+  const [productRows,customerRows,movementRows,invoiceRows,itemRows,settingsRows,profileRows]=await Promise.all([
    fetchAll("products","id,name,sku,unit,sale_price,stock_on_hand,min_stock,note,is_active"),
    fetchAll("customers","id,name,phone,email,address,note,is_active"),
    fetchAll("inventory_movements","id,product_id,movement_type,quantity_delta,description,reference,occurred_at"),
    fetchAll("invoices","id,invoice_number,invoice_date,status,currency,business_name_snapshot,business_phone_snapshot,business_address_snapshot,customer_name_snapshot,customer_phone_snapshot,notes,subtotal,discount_amount,tax_amount,total_amount,created_at"),
-   fetchAll("invoice_items","id,invoice_id,product_id,description,quantity,unit,unit_price,sort_order")
+   fetchAll("invoice_items","id,invoice_id,product_id,description,quantity,unit,unit_price,sort_order"),
+   fetchAll("business_settings","user_id,business_name,phone,address,default_currency,invoice_prefix,next_invoice_number,created_at","user_id"),
+   fetchAll("profiles","id,full_name,created_at")
   ]);
   if(currentUser?.id!==requestedUserId)return;
   const allProducts=productRows.map(mapCloudProduct);
@@ -324,7 +326,7 @@ async function backupExport(){
    const p=allProducts.find(x=>x.id===m.product_id);
    return {id:m.id,kind:m.movement_type==="purchase"||m.movement_type==="opening"?"in":m.movement_type==="sale"?"sale":"return",productId:m.product_id,productName:p?.name||"کالای حذف‌شده",quantity:Math.abs(Number(m.quantity_delta)||0),description:m.description||"",reference:m.reference||"",date:m.occurred_at};
   });
-  const payload={app:"ForushNameh",formatVersion:3,createdAt:new Date().toISOString(),invoices:allInvoices,products:allProducts,customers:allCustomers,movements:allMovements};
+  const payload={app:"ForushNameh",formatVersion:4,createdAt:new Date().toISOString(),profile:profileRows[0]||null,businessSettings:settingsRows[0]||null,invoices:allInvoices,products:allProducts,customers:allCustomers,movements:allMovements};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob),a=document.createElement("a");
   a.href=url;a.download=`ForushNameh-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();
