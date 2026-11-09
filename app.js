@@ -299,7 +299,7 @@ async function backupExport(){
   async function fetchAll(table,columns){
    const result=[];let from=0;const pageSize=1000;
    while(true){
-    const {data,error}=await supabaseClient.from(table).select(columns).order("created_at",{ascending:true}).range(from,from+pageSize-1);
+    const {data,error}=await supabaseClient.from(table).select(columns).order("created_at",{ascending:true}).order("id",{ascending:true}).range(from,from+pageSize-1);
     if(error)throw error;
     const batch=data||[];result.push(...batch);
     if(batch.length<pageSize)break;
