@@ -5,11 +5,30 @@
 <meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="#103b86" name="theme-color"/><title>Forushnameh | مدیریت کسب‌وکار</title>
 <link href="styles.css" rel="stylesheet"/>
-<script defer="" src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script defer="" src="app.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script defer src="app.js"></script>
 <meta content="Forushnameh؛ مدیریت فاکتور، کالا، مشتری و موجودی" name="description"/></head>
 <body>
-<header class="topbar"><div class="brand-lockup"><img alt="Forushnameh" class="brand-logo" src="logo-forushnameh.png"/></div><span class="version">نسخهٔ ۶</span></header>
+<section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
+ <div class="auth-card">
+  <img src="logo-forushnameh.png" alt="Forushnameh" class="auth-logo">
+  <p class="eyebrow">FORUSHNAMEH ACCOUNT</p>
+  <h1 id="authTitle">ورود به فروش‌نامه</h1>
+  <p id="authDescription" class="auth-description">برای دسترسی به فضای کاری خود وارد حساب کاربری‌ات شو.</p>
+  <form id="authForm" novalidate>
+   <div class="field" id="fullNameField" hidden><label for="authFullName">نام و نام خانوادگی</label><input id="authFullName" type="text" autocomplete="name" placeholder="نام شما"></div>
+   <div class="field"><label for="authEmail">ایمیل</label><input id="authEmail" type="email" autocomplete="email" required placeholder="name@example.com" dir="ltr"></div>
+   <div class="field" id="passwordField"><label for="authPassword">رمز عبور</label><input id="authPassword" type="password" autocomplete="current-password" minlength="8" required placeholder="حداقل ۸ نویسه" dir="ltr"></div>
+   <div class="field" id="confirmPasswordField" hidden><label for="authConfirmPassword">تکرار رمز عبور</label><input id="authConfirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="رمز عبور را تکرار کن" dir="ltr"></div>
+   <button id="authSubmit" class="button button-primary auth-submit" type="submit">ورود</button>
+  </form>
+  <p id="authStatus" class="status-message auth-status" role="status" aria-live="polite"></p>
+  <div class="auth-links"><button id="forgotPasswordButton" class="text-button" type="button">رمز عبور را فراموش کرده‌ای؟</button><button id="toggleAuthMode" class="text-button" type="button">ساخت حساب جدید</button></div>
+  <p class="auth-security-note">اطلاعات حساب از طریق سرویس امن احراز هویت Supabase مدیریت می‌شود.</p>
+ </div>
+</section>
+<header class="topbar"><div class="brand-lockup"><img alt="Forushnameh" class="brand-logo" src="logo-forushnameh.png"/></div><div class="topbar-actions"><span id="accountEmail" class="account-email" hidden></span><button id="signOutButton" class="button button-light signout-button" type="button" hidden>خروج از حساب</button><span class="version">نسخهٔ ۷</span></div></header>
 <main class="page"><section class="intro"><p class="eyebrow">FORUSHNAMEH</p><h1>مدیریت کسب‌وکارت، ساده و یکپارچه</h1><p class="intro-text">از اینجا می‌توانی فاکتور صادر کنی، کالاها و مشتریان را مدیریت کنی و موجودی انبار را زیر نظر داشته باشی.</p></section><nav aria-label="بخش‌های برنامه" class="main-nav"><button aria-current="page" class="nav-item active" data-page="dashboard" type="button">داشبورد</button><button aria-current="false" class="nav-item" data-page="invoice" type="button">صدور فاکتور</button><button aria-current="false" class="nav-item" data-page="products" type="button">کالاها و انبار</button><button aria-current="false" class="nav-item" data-page="customers" type="button">مشتریان</button><button aria-current="false" class="nav-item" data-page="saved" type="button">فاکتورهای ذخیره‌شده</button><button aria-current="false" class="nav-item" data-page="backup" type="button">پشتیبان‌گیری</button></nav><section class="app-view active-view" data-view="dashboard">
 <div class="view-heading dashboard-heading"><div><span class="eyebrow">نمای کلی کسب‌وکار</span><h2>داشبورد</h2><p>خلاصه‌ای از وضعیت فروش، مشتریان و موجودی انبار.</p></div><button class="button button-primary" type="button" onclick="window.showForushnamehPage('invoice')">＋ صدور فاکتور جدید</button></div>
 <div class="stats-grid">
@@ -94,5 +113,5 @@
 <div class="saved-actions"><button class="button button-light" id="exportData" type="button">خروجی پشتیبان (JSON)</button><label class="button button-light import-label" for="importData">بازیابی از فایل</label><input accept=".json,application/json" hidden="" id="importData" type="file"/></div>
 <p class="status-message" id="backupStatus" role="status"></p>
 <p class="helper">فایل پشتیبان را در جای امن نگه دار. بازیابی، اطلاعات فعلی این مرورگر را با اطلاعات فایل جایگزین می‌کند.</p>
-</div></section></section><footer class="site-footer">Forushnameh · نسخهٔ ۶</footer></main>
+</div></section></section><footer class="site-footer">Forushnameh · نسخهٔ ۷</footer></main>
 </body></html>

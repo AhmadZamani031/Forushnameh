@@ -1,11 +1,18 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const KEYS={invoices:"forushnameh.invoices.v2",products:"forushnameh.products.v1",customers:"forushnameh.customers.v1",movements:"forushnameh.movements.v1"};
+const SUPABASE_URL="https://exlvtibujxklnigguzkz.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_rndKASKUTndUiotNPWVxsg_GbylnlX0";
+const BASE_KEYS={invoices:"forushnameh.invoices.v2",products:"forushnameh.products.v1",customers:"forushnameh.customers.v1",movements:"forushnameh.movements.v1"};
+let KEYS={...BASE_KEYS};
+let supabaseClient=null;
+let currentUser=null;
+let authMode="login";
+let recoveryMode=false;
 const invoiceFields=["storeName","storePhone","storeAddress","customerName","customerPhone","invoiceNumber","invoiceDate","currency","notes"];
 let items=[{id:1,name:"محصول نمونه",quantity:1,price:250000,productId:""},{id:2,name:"خدمات",quantity:2,price:50000,productId:""}];
 let nextItemId=3, editingInvoiceId=null, editingProductId=null, editingCustomerId=null;
-let products=read(KEYS.products,[]), customers=read(KEYS.customers,[]), movements=read(KEYS.movements,[]);
+let products=[], customers=[], movements=[];
 function read(key,fallback){try{const x=JSON.parse(localStorage.getItem(key)||"null");return Array.isArray(x)?x:fallback}catch(e){return fallback}}
 function write(key,value,statusId){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(e){if(statusId)$(statusId).textContent="ذخیره انجام نشد؛ فضای ذخیره‌سازی مرورگر ممکن است کافی نباشد.";return false}}
 function fa(n){return new Intl.NumberFormat("fa-IR",{maximumFractionDigits:2}).format(Number(n)||0)}
@@ -215,5 +222,74 @@ function init(){
  $("downloadPng").addEventListener("click",async()=>{const btn=$("downloadPng"),status=$("statusMessage");if(typeof window.html2canvas!=="function"){status.textContent="ابزار ساخت تصویر بارگذاری نشده است؛ اتصال اینترنت را بررسی کن.";return}btn.disabled=true;status.textContent="در حال آماده‌سازی تصویر فاکتور…";try{const canvas=await window.html2canvas($("invoicePreview"),{scale:2,backgroundColor:"#fff",useCORS:true,logging:false}),a=document.createElement("a"),n=($("invoiceNumber").value.trim()||"new").replace(/[^\w\u0600-\u06FF-]/g,"_");a.download=`ForushNameh-invoice-${n}.png`;a.href=canvas.toDataURL("image/png");a.click();status.textContent="تصویر فاکتور آماده شد."}catch(e){status.textContent="ساخت تصویر انجام نشد؛ صفحه را تازه‌سازی و دوباره امتحان کن."}finally{btn.disabled=false}});
  drawItems();preview();drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawDashboard();drawDashboard();
 }
-init();
+
+function setAuthMode(mode){
+ authMode=mode;
+ const signup=mode==="signup",reset=mode==="reset",updatePassword=mode==="updatepassword";
+ $("authTitle").textContent=signup?"ساخت حساب کاربری":reset?"بازیابی رمز عبور":updatePassword?"تعیین رمز عبور جدید":"ورود به فروش‌نامه";
+ $("authDescription").textContent=signup?"برای ساخت حساب، نام، ایمیل و یک رمز عبور امن وارد کن.":reset?"ایمیل حساب خود را وارد کن تا پیوند بازیابی رمز برایت ارسال شود.":updatePassword?"یک رمز عبور تازه و امن برای حساب خود انتخاب کن.":"برای دسترسی به فضای کاری خود وارد حساب کاربری‌ات شو.";
+ $("fullNameField").hidden=!signup;$("confirmPasswordField").hidden=!(signup||updatePassword);$("passwordField").hidden=reset;
+ $("authPassword").required=!reset;$("authConfirmPassword").required=signup||updatePassword;
+ $("authPassword").autocomplete=signup?"new-password":"current-password";
+ $("authSubmit").textContent=signup?"ایجاد حساب":reset?"ارسال پیوند بازیابی":updatePassword?"ذخیرهٔ رمز جدید":"ورود";
+ $("toggleAuthMode").hidden=reset||updatePassword;$("forgotPasswordButton").hidden=signup||reset||updatePassword;
+ $("toggleAuthMode").textContent=signup?"قبلاً حساب ساخته‌ام؛ ورود":"ساخت حساب جدید";
+ $("authStatus").textContent="";
+}
+function showAuthMessage(message,isError=false){const el=$("authStatus");el.textContent=message;el.classList.toggle("error",isError)}
+function showAuthenticatedApp(user){
+ currentUser=user;document.querySelector("main.page").hidden=false;
+ KEYS=Object.fromEntries(Object.entries(BASE_KEYS).map(([k,v])=>[k,`${v}.${user.id}`]));
+ products=read(KEYS.products,[]);customers=read(KEYS.customers,[]);movements=read(KEYS.movements,[]);
+ $("authScreen").hidden=true;$("accountEmail").hidden=false;$("accountEmail").textContent=user.email||"حساب کاربری";$("signOutButton").hidden=false;
+ if(!window.forushnamehInitialized){init();window.forushnamehInitialized=true}
+ else{drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawDashboard()}
+}
+function showSignedOut(){
+ currentUser=null;$("authScreen").hidden=false;$("authPassword").value="";$("authConfirmPassword").value="";$("accountEmail").hidden=true;$("signOutButton").hidden=true;
+ document.querySelector("main.page").hidden=true;setAuthMode("login");
+}
+async function handleAuthSubmit(event){
+ event.preventDefault();const email=$("authEmail").value.trim(),password=$("authPassword").value,name=$("authFullName").value.trim();
+ if(!email){showAuthMessage("ایمیل را وارد کن.",true);return}
+ if(authMode!=="reset"&&password.length<8){showAuthMessage("رمز عبور باید حداقل ۸ نویسه داشته باشد.",true);return}
+ if((authMode==="signup"||authMode==="updatepassword")&&password!==$("authConfirmPassword").value){showAuthMessage("تکرار رمز عبور با رمز اصلی یکسان نیست.",true);return}
+ const btn=$("authSubmit");btn.disabled=true;showAuthMessage("در حال برقراری ارتباط…");
+ try{
+  if(authMode==="updatepassword"){
+   const {data,error}=await supabaseClient.auth.updateUser({password});if(error)throw error;showAuthenticatedApp(data.user);showAuthMessage("رمز عبور جدید ذخیره شد.");
+  }else if(authMode==="signup"){
+   const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{full_name:name},emailRedirectTo:"https://ahmadzamani031.github.io/Forushnameh/"}});if(error)throw error;
+   if(data.session){showAuthenticatedApp(data.user);showAuthMessage("حساب ساخته شد و وارد شدی.")}else{showAuthMessage("حساب ساخته شد. ایمیل خود را باز کن و پیوند تأیید را بزن؛ سپس به همین سایت برگرد و وارد شو.")}
+  }else if(authMode==="reset"){
+   const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:"https://ahmadzamani031.github.io/Forushnameh/"});if(error)throw error;showAuthMessage("اگر حسابی با این ایمیل وجود داشته باشد، پیوند بازیابی برایت ارسال می‌شود.");
+  }else{
+   const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});if(error)throw error;showAuthenticatedApp(data.user);showAuthMessage("با موفقیت وارد شدی.");
+  }
+ }catch(error){showAuthMessage(authErrorMessage(error),true)}finally{btn.disabled=false}
+}
+function authErrorMessage(error){
+ const m=String(error?.message||"").toLowerCase();
+ if(m.includes("invalid login credentials"))return "ایمیل یا رمز عبور صحیح نیست.";
+ if(m.includes("email not confirmed"))return "ابتدا ایمیل خود را تأیید کن و سپس وارد شو.";
+ if(m.includes("user already registered"))return "این ایمیل قبلاً ثبت‌نام کرده است؛ وارد حساب شو.";
+ if(m.includes("password should be at least"))return "رمز عبور باید حداقل ۸ نویسه داشته باشد.";
+ if(m.includes("rate limit"))return "تعداد درخواست‌ها زیاد شده است؛ کمی بعد دوباره تلاش کن.";
+ if(m.includes("failed to fetch"))return "ارتباط با سرور برقرار نشد؛ اینترنت و تنظیمات اتصال را بررسی کن.";
+ return error?.message||"خطایی رخ داد. دوباره تلاش کن.";
+}
+async function startAuth(){
+ document.querySelector("main.page").hidden=true;
+ if(!window.supabase?.createClient){showSignedOut();showAuthMessage("کتابخانهٔ اتصال بارگذاری نشد؛ اتصال اینترنت را بررسی و صفحه را تازه‌سازی کن.",true);return}
+ supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+ $("authForm").addEventListener("submit",handleAuthSubmit);
+ $("toggleAuthMode").addEventListener("click",()=>setAuthMode(authMode==="signup"?"login":"signup"));
+ $("forgotPasswordButton").addEventListener("click",()=>setAuthMode("reset"));
+ $("signOutButton").addEventListener("click",async()=>{const {error}=await supabaseClient.auth.signOut();if(error){alert(authErrorMessage(error));return}showSignedOut()});
+ supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_IN"&&session?.user)showAuthenticatedApp(session.user);if(event==="SIGNED_OUT")showSignedOut();if(event==="PASSWORD_RECOVERY"){recoveryMode=true;document.querySelector("main.page").hidden=true;$("authScreen").hidden=false;setAuthMode("updatepassword");showAuthMessage("پیوند بازیابی تأیید شد؛ رمز جدیدت را وارد کن.")}});
+ const {data:{session},error}=await supabaseClient.auth.getSession();
+ if(error){showSignedOut();showAuthMessage(authErrorMessage(error),true);return}
+ if(session?.user&&!recoveryMode){showAuthenticatedApp(session.user)}else if(!recoveryMode){showSignedOut()}
+}
+startAuth();
 })();

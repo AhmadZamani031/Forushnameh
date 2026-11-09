@@ -146,3 +146,24 @@ body{background:#f4f7fb;color:var(--ink)}
 .site-footer{color:#8290a2}
 @media(max-width:850px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-columns{grid-template-columns:1fr}.quick-actions{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.page{padding:18px 13px}.intro h1{font-size:21px}.main-nav{top:4px}.nav-item{padding:10px 12px;font-size:12px}.dashboard-heading{align-items:flex-start;flex-direction:column}.dashboard-heading .button{width:100%}.stats-grid{gap:10px}.stat-card{min-height:135px;padding:14px}.stat-card strong{font-size:21px}.dashboard-panel,.quick-panel{padding:15px}.quick-actions{grid-template-columns:1fr 1fr}.workspace{grid-template-columns:1fr}}
+
+/* Forushnameh v7 account and authentication */
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.account-email{font-size:11px;color:#65758b;direction:ltr;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.signout-button{padding:8px 12px;font-size:11px}
+.auth-screen{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:22px;background:linear-gradient(145deg,#eef4fc,#f8fafc 55%,#eaf1fb);overflow-y:auto}
+.auth-screen[hidden]{display:none}
+.auth-card{width:min(100%,440px);padding:32px;background:#fff;border:1px solid #e3eaf3;border-radius:22px;box-shadow:0 18px 60px rgba(22,53,93,.10)}
+.auth-logo{display:block;width:min(230px,70%);height:68px;object-fit:contain;object-position:right center;margin:0 auto 12px 0}
+.auth-card h1{font-size:24px;margin:5px 0 8px;color:#17263b}
+.auth-description{font-size:13px;line-height:1.9;color:#718096;margin:0 0 20px}
+.auth-card .field{margin-bottom:14px}
+.auth-card input{width:100%;min-height:46px;border:1px solid #dce4ef;border-radius:11px;padding:10px 12px;font:inherit;background:#fbfcfe}
+.auth-card input:focus{outline:2px solid #c9dcf5;border-color:#6d9bd1}
+.auth-submit{width:100%;margin-top:6px;min-height:46px}
+.auth-status{min-height:22px;margin:12px 0 0;font-size:12px;line-height:1.8}
+.auth-status.error{color:#b42318}
+.auth-links{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px}
+.auth-links .text-button{font-size:11px;padding:4px 0}
+.auth-security-note{font-size:10px;color:#94a0b0;line-height:1.8;margin:20px 0 0;border-top:1px solid #edf0f5;padding-top:12px}
+@media(max-width:600px){.topbar-actions{gap:6px}.account-email{max-width:100px;font-size:9px}.signout-button{padding:7px 8px;font-size:9px}.auth-card{padding:24px 19px}.auth-card h1{font-size:21px}}
