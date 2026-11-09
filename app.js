@@ -60,7 +60,6 @@ async function loadCloudInvoices(requestedUserId=currentUser?.id){
  cloudInvoices=(rows||[]).map(row=>({id:row.id,status:row.status,totalAmount:Number(row.total_amount)||0,data:{invoiceNumber:row.invoice_number||"",invoiceDate:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at}));
  drawInvoices();return true;
 }
-}
 
 function drawItems(){
  const opts=products.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.code?" ("+esc(p.code)+")":""} — ${fa(p.price)} ${esc($("currency").value)}</option>`).join("");
@@ -125,7 +124,9 @@ async function saveInvoice(){
  if(!supabaseClient||!requestedUserId){$("savedStatus").textContent="برای صدور فاکتور ابتدا وارد حساب کاربری شو.";return}
  if(editingInvoiceId){$("savedStatus").textContent="این فاکتور قبلاً صادر شده و امکان ویرایش مستقیم آن وجود ندارد. برای صدور فاکتور تازه، «فاکتور جدید» را بزن.";return}
  const dateRaw=$("invoiceDate").value.trim().replace(/\//g,"-");
- if(!/^\d{4}-\d{2}-\d{2}$/.test(dateRaw)||Number.isNaN(Date.parse(dateRaw))){$("savedStatus").textContent="تاریخ را به شکل سال-ماه-روز میلادی وارد کن؛ مانند 2026-11-09.";return}
+ const dateParts=dateRaw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+ const validDate=!!dateParts&&(()=>{const y=Number(dateParts[1]),m=Number(dateParts[2]),d=Number(dateParts[3]),dt=new Date(Date.UTC(y,m-1,d));return dt.getUTCFullYear()===y&&dt.getUTCMonth()===m-1&&dt.getUTCDate()===d})();
+ if(!validDate){$("savedStatus").textContent="تاریخ معتبر نیست؛ از قالب سال/ماه/روز میلادی استفاده کن.";return}
  if(!items.length||items.some(it=>!String(it.name||"").trim()||num(it.quantity)<=0||num(it.price)<0)){$("savedStatus").textContent="همهٔ ردیف‌ها باید شرح، تعداد بیشتر از صفر و قیمت معتبر داشته باشند.";return}
  const payload={customer_id:$("customerPicker").value||null,customer_name:$("customerName").value.trim(),customer_phone:$("customerPhone").value.trim(),invoice_date:dateRaw,currency:$("currency").value||"تومان",notes:$("notes").value.trim(),discount_amount:0,tax_amount:0,items:items.map(it=>({product_id:it.productId||null,description:String(it.name||"").trim(),unit:productById(it.productId)?.unit||"عدد",quantity:num(it.quantity),unit_price:num(it.price)}))};
  const btn=$("saveInvoice");btn.disabled=true;$("savedStatus").textContent="در حال صدور فاکتور و بررسی موجودی در پایگاه داده…";
@@ -206,7 +207,7 @@ async function saveCustomer(){
 }
 function editCustomer(id){if(window.showForushnamehPage)window.showForushnamehPage("customers");const c=customers.find(x=>x.id===id);if(!c)return;editingCustomerId=id;$("customerRecordName").value=c.name;$("customerRecordPhone").value=c.phone;$("customerRecordEmail").value=c.email;$("customerRecordAddress").value=c.address;$("saveCustomer").textContent="ذخیرهٔ تغییرات";$("cancelCustomerEdit").hidden=false}
 function backupExport(){
- const payload={app:"ForushNameh",formatVersion:1,createdAt:new Date().toISOString(),invoices:read(KEYS.invoices,[]),products,customers,movements};
+ const payload={app:"ForushNameh",formatVersion:2,createdAt:new Date().toISOString(),invoices:cloudInvoices,products,customers,movements};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
  a.href=url;a.download=`ForushNameh-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url);$("backupStatus").textContent="فایل پشتیبان ساخته شد؛ آن را در جای امن نگه دار.";
 }
