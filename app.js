@@ -708,12 +708,11 @@ function applyTheme(mode){
  const effective=mode==="dark"?"dark":"light";
  document.documentElement.dataset.theme=effective;
  document.querySelectorAll(".brand-logo,.public-brand img").forEach(img=>{img.src=effective==="dark"?"logo-forushnameh-dark.svg":"logo-forushnameh.svg"});
- const button=document.querySelector("[data-theme-toggle]");
- if(button){
+ document.querySelectorAll("[data-theme-toggle]").forEach(button=>{
   button.setAttribute("aria-pressed",String(effective==="dark"));
   button.setAttribute("aria-label",effective==="dark"?"فعال‌سازی تم روشن":"فعال‌سازی تم تاریک");
   button.title=effective==="dark"?"تغییر به تم روشن":"تغییر به تم تاریک";
- }
+ });
  const meta=document.querySelector('meta[name="theme-color"]');
  if(meta)meta.content=effective==="dark"?"#101a2b":"#103b86";
 }
