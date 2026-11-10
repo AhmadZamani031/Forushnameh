@@ -145,8 +145,10 @@ async function deleteCurrentAccount(){
   alert("حساب کاربری و اطلاعات مرتبط با موفقیت حذف شدند.");
   showSignedOut();
  }catch(error){
-  status.textContent=error?.context?.error||error?.message||"حذف حساب انجام نشد. اطلاعات حساب حذف نشده‌اند یا وضعیت عملیات را از پشتیبانی بررسی کن.";
-  if(error?.context?.retryable)status.textContent="اطلاعات کاری حذف شده‌اند اما حساب ورود باقی مانده است. دوباره وارد شو و عملیات حذف حساب را تکرار کن.";
+  let details=null;
+  try{if(error?.context&&typeof error.context.clone==="function")details=await error.context.clone().json()}catch(_){}
+  status.textContent=details?.error||error?.message||"حذف حساب انجام نشد. وضعیت عملیات را بررسی کن.";
+  if(details?.retryable)status.textContent="اطلاعات کاری حذف شده‌اند اما حساب ورود باقی مانده است. دوباره وارد شو و عملیات حذف حساب را تکرار کن.";
  }finally{
   if(currentUser?.id===requestedUserId)button.disabled=false;
  }
