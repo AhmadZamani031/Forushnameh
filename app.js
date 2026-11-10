@@ -233,6 +233,7 @@ async function voidInvoice(invoiceId){
   if(error)throw error;
   if(currentUser?.id!==requestedUserId)return;
   await loadCloudData();if(currentUser?.id!==requestedUserId)return;
+  if(selectedPaymentInvoiceId===invoice.id){selectedPaymentInvoiceId=null;$("paymentPanel").hidden=true}
   $("invoiceFilterStatus").textContent="فاکتور "+(data?.invoice_number||invoice.data.invoiceNumber)+" با موفقیت باطل شد و موجودی کالاهای آن بازگشت داده شد.";
  }catch(error){
   if(currentUser?.id===requestedUserId)alert("ابطال فاکتور انجام نشد: "+cloudError(error));
@@ -250,7 +251,7 @@ function clearInvoiceFilters(){
 function paymentMethodLabel(method){return ({cash:"نقدی",card:"کارت‌خوان",bank_transfer:"واریز بانکی",other:"سایر"})[method]||"سایر"}
 function drawPaymentPanel(){
  const panel=$("paymentPanel"),invoice=cloudInvoices.find(x=>x.id===selectedPaymentInvoiceId);
- if(!panel||!invoice){if(panel)panel.hidden=true;return}
+ if(!panel||!invoice||invoice.status!=="issued"){if(panel)panel.hidden=true;return}
  panel.hidden=false;$("paymentPanelTitle").textContent="دریافت‌های فاکتور "+(invoice.data.invoiceNumber||"");
  $("paymentInvoiceSummary").textContent="مبلغ فاکتور: "+fa(invoice.totalAmount)+" · دریافتی: "+fa(invoice.paidAmount)+" · مانده: "+fa(invoice.balance)+" "+(invoice.data.currency||"تومان");
  $("paymentAmount").max=String(invoice.balance);$("savePayment").disabled=invoice.balance<=0.005;
@@ -522,7 +523,7 @@ function drawDashboard(){
 function parseInvoiceDate(value){const raw=String(value||"").slice(0,10),m=raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return null;const y=Number(m[1]),month=Number(m[2]),day=Number(m[3]),d=new Date(y,month-1,day);return d.getFullYear()===y&&d.getMonth()===month-1&&d.getDate()===day?d:null}
 function drawReports(){
  const periodEl=$("reportPeriod"),currencyEl=$("reportCurrency");if(!periodEl||!currencyEl)return;
- const currencies=[...new Set(cloudInvoices.map(x=>x.data?.currency||"تومان"))].sort(),old=currencyEl.value;
+ const currencies=[...new Set(cloudInvoices.filter(x=>x.status==="issued").map(x=>x.data?.currency||"تومان"))].sort(),old=currencyEl.value;
  currencyEl.innerHTML=currencies.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("");
  currencyEl.value=currencies.includes(old)?old:(currencies.includes(businessSettings?.default_currency)?businessSettings.default_currency:(currencies[0]||""));
  const currency=currencyEl.value||businessSettings?.default_currency||currencies[0]||"تومان",all=cloudInvoices.filter(x=>x.status==="issued"&&(x.data?.currency||"تومان")===currency),now=new Date(),period=periodEl.value;
