@@ -148,6 +148,32 @@ async function saveAccountProfile(){
  }catch(error){status.textContent="ذخیرهٔ اطلاعات حساب انجام نشد: "+cloudError(error)}
  finally{button.disabled=false}
 }
+async function changeAccountPassword(){
+ const user=currentUser;
+ if(!supabaseClient||!user?.email)return;
+ const currentPassword=$("currentAccountPassword").value;
+ const newPassword=$("newAccountPassword").value;
+ const confirmPassword=$("confirmAccountPassword").value;
+ const status=$("accountPasswordStatus"),button=$("changeAccountPasswordButton");
+ if(!currentPassword){status.textContent="رمز عبور فعلی را وارد کنید.";return}
+ if(newPassword.length<8){status.textContent="رمز عبور جدید باید حداقل ۸ نویسه داشته باشد.";return}
+ if(newPassword===currentPassword){status.textContent="رمز عبور جدید باید با رمز فعلی متفاوت باشد.";return}
+ if(newPassword!==confirmPassword){status.textContent="تکرار رمز عبور جدید یکسان نیست.";return}
+ const strength=[newPassword.length>=8,/[a-z]/.test(newPassword)&&/[A-Z]/.test(newPassword),/\d/.test(newPassword),/[^A-Za-z0-9]/.test(newPassword)].filter(Boolean).length;
+ if(strength<3){status.textContent="برای امنیت بیشتر، رمز عبور ترکیبی از حروف، عدد یا نشانه انتخاب کنید.";return}
+ button.disabled=true;status.textContent="در حال بررسی رمز فعلی و ذخیره رمز جدید…";
+ try{
+  const {error}=await supabaseClient.auth.updateUser({password:newPassword,current_password:currentPassword});
+  if(error)throw error;
+  $("currentAccountPassword").value="";$("newAccountPassword").value="";$("confirmAccountPassword").value="";
+  status.textContent="رمز عبور با موفقیت تغییر کرد.";
+ }catch(error){
+  const message=String(error?.message||"").toLowerCase();
+  if(message.includes("current password")||message.includes("incorrect password"))status.textContent="رمز عبور فعلی صحیح نیست.";
+  else status.textContent="تغییر رمز عبور انجام نشد: "+(error?.message||"لطفاً دوباره تلاش کنید.");
+ }finally{if(currentUser?.id===user.id)button.disabled=false}
+}
+
 async function deleteCurrentAccount(){
  const requestedUserId=currentUser?.id;
  if(!supabaseClient||!requestedUserId)return;
@@ -681,7 +707,7 @@ function init(){
  ["customerName","customerPhone"].forEach(id=>$(id).addEventListener("input",()=>{if($("customerPicker").value)$("customerPicker").value="";}));
  $("saveInvoice").addEventListener("click",saveInvoice);$("newInvoice").addEventListener("click",newInvoice);
  $("saveBusinessSettings").addEventListener("click",saveBusinessSettings);
- $("deleteAccountButton").addEventListener("click",deleteCurrentAccount);$("saveAccountProfile").addEventListener("click",saveAccountProfile);
+ $("deleteAccountButton").addEventListener("click",deleteCurrentAccount);$("saveAccountProfile").addEventListener("click",saveAccountProfile);$("changeAccountPasswordButton").addEventListener("click",changeAccountPassword);
  $("reportPeriod").addEventListener("change",drawReports);$("reportCurrency").addEventListener("change",drawReports);
  $("exportReportPdf").addEventListener("click",exportReportPdf);$("exportReportCsv").addEventListener("click",exportReportCsv);
  $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]"),p=e.target.closest("[data-payment-invoice]"),v=e.target.closest("[data-void-invoice]");if(o){loadInvoice(o.dataset.openInvoice);return}if(p){openPaymentPanel(p.dataset.paymentInvoice);return}if(v&&!v.disabled)voidInvoice(v.dataset.voidInvoice)});
