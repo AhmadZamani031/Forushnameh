@@ -1,4 +1,4 @@
-const CACHE_NAME="forushnameh-shell-v12";
+const CACHE_NAME="forushnameh-shell-v13";
 const APP_SHELL=[
  "./",
  "./index.html",
@@ -7,11 +7,9 @@ const APP_SHELL=[
  "./faq.html",
  "./privacy.html",
  "./terms.html",
- "./styles.css?v=22",
- "./app.js?v=23",
+ "./styles.css?v=23",
+ "./app.js?v=24",
  "./site.js?v=2",
- "./favicon.svg",
- "./app-icon.svg",
  "./logo-forushnameh.svg",
  "./logo-forushnameh-dark.svg",
  "./hero-dashboard.svg",
@@ -37,7 +35,8 @@ self.addEventListener("fetch",event=>{
    return response;
   }).catch(async()=>{
    const cached=await caches.match(request)||await caches.match("./index.html");
-   return await caches.match("./offline.html");
+   if(cached)return cached;
+   return caches.match("./offline.html");
   }));
   return;
  }
