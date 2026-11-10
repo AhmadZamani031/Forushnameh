@@ -143,7 +143,6 @@ begin
   for v_item in
     select value from jsonb_array_elements(v_records -> 'payments')
     order by coalesce((value ->> 'created_at')::timestamptz,(value ->> 'paid_at')::timestamptz,now()),
-      case when value ->> 'payment_type' = 'reversal' then 1 else 0 end,
       value ->> 'id'
   loop
     insert into public.invoice_payments
