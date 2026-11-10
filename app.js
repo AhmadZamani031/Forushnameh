@@ -316,23 +316,28 @@ async function saveInvoice(){
   const {data,error}=await supabaseClient.rpc("forushnameh_issue_invoice",{p_invoice:payload});if(error)throw error;
   if(currentUser?.id!==requestedUserId)return;
   if(!data?.invoice_id||!data?.invoice_number)throw new Error("پاسخ صدور فاکتور از سرور کامل نیست.");
-  $("invoiceNumber").value=data.invoice_number;editingInvoiceId=data.invoice_id;
+  $("invoiceNumber").value=data.invoice_number;editingInvoiceId=data.invoice_id;setInvoiceReadOnly(true);
   await loadCloudData();if(currentUser?.id!==requestedUserId)return;
   $("savedStatus").textContent="فاکتور "+data.invoice_number+" با موفقیت صادر و در فضای ابری ثبت شد. موجودی کالاهای انتخاب‌شده نیز به‌روزرسانی شد.";
  }catch(error){if(currentUser?.id===requestedUserId)$("savedStatus").textContent="صدور فاکتور انجام نشد: "+cloudError(error)}
  finally{if(currentUser?.id===requestedUserId)btn.disabled=false}
+}
+function setInvoiceReadOnly(readOnly){
+ invoiceFields.forEach(id=>$(id).disabled=readOnly);
+ $("customerPicker").disabled=readOnly;$("addItem").disabled=readOnly;$("saveInvoice").disabled=readOnly;
+ $("itemsEditor").querySelectorAll("input,select,button").forEach(control=>control.disabled=readOnly);
 }
 function loadInvoice(id){
  const x=cloudInvoices.find(a=>a.id===id);if(!x)return;
  invoiceFields.forEach(k=>{if(x.data[k]!==undefined)$(k).value=x.data[k]});$("customerPicker").value="";
  items=x.items.map((it,i)=>({id:i+1,name:it.name||"",quantity:num(it.quantity),price:num(it.price),productId:it.productId||""}));
  if(!items.length)items=[{id:1,name:"",quantity:1,price:0,productId:""}];
- nextItemId=items.length+1;editingInvoiceId=x.id;drawItems();preview();
+ nextItemId=items.length+1;editingInvoiceId=x.id;drawItems();setInvoiceReadOnly(true);preview();
  $("savedStatus").textContent="فاکتور صادرشده فقط برای مشاهده باز شده است؛ برای صدور فاکتور دیگر، «فاکتور جدید» را بزن.";
  if(window.showForushnamehPage)window.showForushnamehPage("invoice");
 }
 function newInvoice(){
- $("customerPicker").value="";invoiceFields.forEach(k=>{if(k==="storeName"||k==="currency")return;$(k).value=""});
+ setInvoiceReadOnly(false);$("customerPicker").value="";invoiceFields.forEach(k=>{if(k==="storeName"||k==="currency")return;$(k).value=""});
  $("invoiceDate").value=today();$("invoiceNumber").value="";
  if(businessSettings){$("storeName").value=businessSettings.business_name||"";$("storePhone").value=businessSettings.phone||"";$("storeAddress").value=businessSettings.address||"";$("currency").value=businessSettings.default_currency||"تومان"}
  items=[{id:1,name:"",quantity:1,price:0,productId:""}];nextItemId=2;editingInvoiceId=null;drawItems();preview();$("savedStatus").textContent="فاکتور جدید آماده است.";
