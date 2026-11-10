@@ -32,6 +32,27 @@ button{border:0;border-radius:10px;background:#103b86;color:#fff;padding:12px 22
 :root[data-theme="dark"] .theme-toggle .sun{display:block}
 button:focus-visible{outline:3px solid #83b6f5;outline-offset:3px}
 </style>
+<script>
+/* If a stale worker serves this page while the browser reports online, clear it and retry once. */
+(async function(){
+ let alreadyTried=false;
+ try{alreadyTried=sessionStorage.getItem("forushnameh.worker-recovery")==="1"}catch(_){}
+ if(!navigator.onLine||alreadyTried)return;
+ try{sessionStorage.setItem("forushnameh.worker-recovery","1")}catch(_){}
+ try{
+  if("serviceWorker" in navigator){
+   const registrations=await navigator.serviceWorker.getRegistrations();
+   await Promise.all(registrations.filter(reg=>new URL(reg.scope).pathname.includes("/Forushnameh/")).map(reg=>reg.unregister()));
+  }
+  if("caches" in window){
+   const keys=await caches.keys();
+   await Promise.all(keys.filter(key=>key.startsWith("forushnameh-shell-")).map(key=>caches.delete(key)));
+  }
+ }catch(_){}
+ location.replace("./?recover="+Date.now());
+})();
+</script>
+
 </head>
 <body>
 <main class="card">
