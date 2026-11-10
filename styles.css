@@ -367,3 +367,6 @@ html[data-theme="dark"] .invoice-table th{background:#f2f7fd!important;color:#71
 html[data-theme="dark"] .customer-block{background:#f2f7fd!important;color:#25342d!important}
 @media(max-width:600px){.topbar-actions{flex-wrap:wrap;justify-content:flex-end}.theme-control{order:0}.theme-control select{max-width:105px}}
 @media print{html[data-theme="dark"] body{background:#fff!important}html[data-theme="dark"] .invoice,html[data-theme="dark"] #invoicePreview{background:#fff!important;color:#111!important}}
+
+.install-app-button{white-space:nowrap}
+@media(max-width:600px){.install-app-button{font-size:10px;padding:7px 9px}}
