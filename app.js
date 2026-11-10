@@ -707,6 +707,7 @@ const THEME_KEY="forushnameh.theme";
 function applyTheme(mode){
  const effective=mode==="dark"?"dark":"light";
  document.documentElement.dataset.theme=effective;
+ document.querySelectorAll(".brand-logo,.public-brand img").forEach(img=>{img.src=effective==="dark"?"logo-forushnameh-dark.svg":"logo-forushnameh.svg"});
  const button=document.querySelector("[data-theme-toggle]");
  if(button){
   button.setAttribute("aria-pressed",String(effective==="dark"));
