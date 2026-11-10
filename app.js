@@ -626,6 +626,7 @@ function setAuthMode(mode){
 }
 function showAuthMessage(message,isError=false){const el=$("authStatus");el.textContent=message;el.classList.toggle("error",isError)}
 function resetUserWorkspace(){
+ setInvoiceReadOnly(false);
  products=[];customers=[];movements=[];cloudInvoices=[];businessSettings=null;
  editingInvoiceId=null;editingProductId=null;editingCustomerId=null;
  items=[{id:1,name:"",quantity:1,price:0,productId:""}];nextItemId=2;
