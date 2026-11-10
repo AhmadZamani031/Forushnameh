@@ -396,3 +396,70 @@ html[data-theme="dark"] .public-menu-toggle span{background:#dce9fb}
 html[data-theme="dark"] .public-nav a:hover{background:#293b55}
 html[data-theme="dark"] .public-nav{border-color:#33435b}
 html[data-theme="dark"] .public-proof div{border-color:#33435b}
+
+/* Theme and header polish v17 */
+.theme-toggle{width:40px;height:40px;flex:0 0 40px;display:inline-grid;place-items:center;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff);color:var(--blue,#174b91);cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
+.theme-toggle:hover{background:var(--surface-soft,#f4f7fb);transform:translateY(-1px)}
+.theme-toggle:focus-visible{outline:3px solid var(--focus,#75a7ec);outline-offset:3px}
+.theme-icon{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.theme-icon-sun{display:none}
+html[data-theme="dark"] .theme-icon-moon{display:none}
+html[data-theme="dark"] .theme-icon-sun{display:block}
+#appTopbar{direction:rtl;justify-content:space-between}
+#appTopbar .brand-lockup{flex:0 0 auto;margin-left:0}
+#appTopbar .topbar-actions{margin-right:auto;justify-content:flex-start;min-width:0}
+.brand-logo{background:transparent}
+html[data-theme="dark"] .brand-logo,html[data-theme="dark"] .public-brand img{content:url("logo-forushnameh-dark.svg")}
+html[data-theme="dark"]{color-scheme:dark;--ink:#e8eef8;--muted:#aab8cc;--line:#35465f;--surface:#19283e;--surface-soft:#21324b;--surface-raised:#263954;--panel:#19283e;--blue:#8dbaff;--blue2:#a7caff;--focus:#91bdff}
+html[data-theme="dark"] body,html[data-theme="dark"] body.public-site{background:#101a2b;color:var(--ink)}
+html[data-theme="dark"] .topbar,html[data-theme="dark"] .main-nav,html[data-theme="dark"] .panel,html[data-theme="dark"] .report-stat,html[data-theme="dark"] .report-inner,html[data-theme="dark"] .management-form,html[data-theme="dark"] .invoice-filters,html[data-theme="dark"] .saved-invoice,html[data-theme="dark"] .record-row,html[data-theme="dark"] .item-editor,html[data-theme="dark"] .stat-card:not(.stat-sales),html[data-theme="dark"] .quick-actions button{background:var(--surface);border-color:var(--line);color:var(--ink)}
+html[data-theme="dark"] .topbar{box-shadow:0 2px 14px #0005}
+html[data-theme="dark"] .account-email{color:#d3deed}
+html[data-theme="dark"] .nav-item{color:#c0cee0}
+html[data-theme="dark"] .nav-item:hover{background:#2b405e;color:#fff}
+html[data-theme="dark"] .nav-item.active{background:#24569a;color:#fff}
+html[data-theme="dark"] h1,html[data-theme="dark"] h2,html[data-theme="dark"] h3,html[data-theme="dark"] h4,html[data-theme="dark"] .view-heading h2,html[data-theme="dark"] .intro h1,html[data-theme="dark"] .section-heading h2,html[data-theme="dark"] .report-stat strong,html[data-theme="dark"] .record-main strong,html[data-theme="dark"] .saved-invoice-info strong,html[data-theme="dark"] .report-inner h3{color:#e5eefb}
+html[data-theme="dark"] p,html[data-theme="dark"] label,html[data-theme="dark"] .helper,html[data-theme="dark"] .muted,html[data-theme="dark"] .intro-text,html[data-theme="dark"] .view-heading p,html[data-theme="dark"] .section-heading p,html[data-theme="dark"] .site-footer,html[data-theme="dark"] .stat-card small,html[data-theme="dark"] .saved-invoice-info span,html[data-theme="dark"] .record-main span,html[data-theme="dark"] .report-bar-item strong,html[data-theme="dark"] .report-bar-item small,html[data-theme="dark"] .report-list-row strong,html[data-theme="dark"] .report-list-row strong small,html[data-theme="dark"] .report-list-row b,html[data-theme="dark"] .volume-item strong,html[data-theme="dark"] .volume-item small,html[data-theme="dark"] .share-legend>div,html[data-theme="dark"] .invoice-meta span,html[data-theme="dark"] .small-label,html[data-theme="dark"] .invoice-notes p,html[data-theme="dark"] .invoice-footer{color:#aab8cc}
+html[data-theme="dark"] input,html[data-theme="dark"] textarea,html[data-theme="dark"] select{background:#111e31;border-color:#435873;color:#e8eef8;color-scheme:dark}
+html[data-theme="dark"] input::placeholder,html[data-theme="dark"] textarea::placeholder{color:#91a2ba}
+html[data-theme="dark"] .button-light{background:#263a57;color:#e1ebfa;border-color:#435873}
+html[data-theme="dark"] .button-outline{background:#1b2a40;color:#e1ebfa;border-color:#526780}
+html[data-theme="dark"] .button-ghost{color:#c4dcff;border-color:#435873}
+html[data-theme="dark"] .button-danger{background:#482c38;color:#ffc5c5;border-color:#704454}
+html[data-theme="dark"] .step-number,html[data-theme="dark"] .stat-icon{background:#263b59;color:#c2dcff}
+html[data-theme="dark"] .quick-actions button{background:#1b2b42;color:#d9e6f7;border-color:#40536e}
+html[data-theme="dark"] .privacy-note{background:#3a3022;border-color:#69543a;color:#f0d3a5}
+html[data-theme="dark"] .low-stock{color:#ffc16c}
+html[data-theme="dark"] .report-volume-chart .volume-track,html[data-theme="dark"] .report-bar-track,html[data-theme="dark"] .volume-track{background:#293b55}
+html[data-theme="dark"] .share-ring:before{background:#19283e}
+html[data-theme="dark"] .share-ring span{color:#e8eef8}
+html[data-theme="dark"] .auth-screen{background:#0b1422ef}
+html[data-theme="dark"] .auth-card{background:#19283e;border-color:#35465f;color:#e8eef8}
+html[data-theme="dark"] .auth-card h1,html[data-theme="dark"] .auth-description,html[data-theme="dark"] .auth-card label{color:#e8eef8}
+html[data-theme="dark"] .auth-security-note{background:#263954;color:#c0cee0;border-color:#435873}
+html[data-theme="dark"] .auth-close{background:#263954;color:#e1ebfa}
+html[data-theme="dark"] .password-strength-track{background:#34465f}
+html[data-theme="dark"] .public-header{background:#18253a;border-bottom:1px solid #35465f}
+html[data-theme="dark"] .public-nav a,html[data-theme="dark"] .public-footer a,html[data-theme="dark"] .public-footer button{color:#c0cee0}
+html[data-theme="dark"] .public-hero h1,html[data-theme="dark"] .public-section-heading h2,html[data-theme="dark"] .about-section h2,html[data-theme="dark"] .contact-section h2,html[data-theme="dark"] .standalone-page h1,html[data-theme="dark"] .standalone-page h2,html[data-theme="dark"] .feature-card h3,html[data-theme="dark"] .faq-grid summary,html[data-theme="dark"] .standalone-faq summary{color:#e0ebfb}
+html[data-theme="dark"] .public-hero-copy>p,html[data-theme="dark"] .public-section-heading p,html[data-theme="dark"] .about-section p,html[data-theme="dark"] .contact-section p,html[data-theme="dark"] .public-trust,html[data-theme="dark"] .standalone-page>p,html[data-theme="dark"] .standalone-page li,html[data-theme="dark"] .legal-copy p,html[data-theme="dark"] .public-footer p,html[data-theme="dark"] .public-footer small,html[data-theme="dark"] .feature-card p,html[data-theme="dark"] .faq-grid details p{color:#aab8cc}
+html[data-theme="dark"] .public-proof,html[data-theme="dark"] .legal-copy,html[data-theme="dark"] .standalone-faq details,html[data-theme="dark"] .faq-grid details,html[data-theme="dark"] .feature-card,html[data-theme="dark"] .hero-window,html[data-theme="dark"] .hero-floating-card{background:#19283e;border-color:#35465f;color:#e8eef8}
+html[data-theme="dark"] .public-proof strong,html[data-theme="dark"] .contact-note strong,html[data-theme="dark"] .hero-mini-grid b,html[data-theme="dark"] .hero-invoice-row b{color:#dce9fb}
+html[data-theme="dark"] .public-proof span,html[data-theme="dark"] .contact-note span,html[data-theme="dark"] .hero-window-head b,html[data-theme="dark"] .hero-mini-grid small,html[data-theme="dark"] .hero-invoice-row{color:#aab8cc}
+html[data-theme="dark"] .hero-window-head,html[data-theme="dark"] .hero-mini-grid div{background:#22334d;border-color:#35465f}
+html[data-theme="dark"] .hero-invoice-row{border-color:#35465f}
+html[data-theme="dark"] .contact-note{background:#22334d;border-color:#405873}
+html[data-theme="dark"] .public-footer{background:#141f31;border-top:1px solid #35465f}
+html[data-theme="dark"] .public-menu-toggle{background:#22334d;border-color:#405873}
+html[data-theme="dark"] .public-menu-toggle span{background:#e1ebfa}
+html[data-theme="dark"] .public-nav a:hover{background:#293b55}
+html[data-theme="dark"] .public-nav,html[data-theme="dark"] .public-proof div{border-color:#35465f}
+html[data-theme="dark"] .legal-summary{background:#19283e;border-color:#35465f}
+html[data-theme="dark"] .legal-summary p{color:#aab8cc}
+html[data-theme="dark"] .auth-status.error{color:#ff9b9b}
+html[data-theme="dark"] .stat-sales{background:linear-gradient(145deg,#174b91,#2464b4);color:#fff}
+html[data-theme="dark"] .invoice,html[data-theme="dark"] #invoicePreview{background:#fff!important;color:#25342d!important;color-scheme:light}
+html[data-theme="dark"] .invoice-top h2,html[data-theme="dark"] .grand-total{color:#174b91!important}
+html[data-theme="dark"] .invoice-table th,html[data-theme="dark"] .customer-block{background:#f2f7fd!important;color:#718096!important}
+@media(max-width:760px){#appTopbar{height:auto;min-height:68px;padding:9px 14px;gap:10px}#appTopbar .brand-logo{width:150px;height:auto;max-height:48px}#appTopbar .topbar-actions{flex-wrap:wrap;gap:7px}.account-email{max-width:145px}}
+@media(max-width:430px){#appTopbar .brand-logo{width:118px}.theme-toggle{width:36px;height:36px;flex-basis:36px}.account-email{max-width:110px}.signout-button{padding:7px 9px;font-size:11px}}
