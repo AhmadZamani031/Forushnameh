@@ -821,7 +821,7 @@ function setupTheme(){
 setupTheme();
 async function startAuth(){
  document.querySelector("main.page").hidden=true;
- if(!window.supabase?.createClient){showSignedOut();showAuthMessage("کتابخانهٔ اتصال بارگذاری نشد؛ اتصال اینترنت را بررسی و صفحه را تازه‌سازی کن.",true);return}
+ if(!window.supabase?.createClient){showSignedOut();showAuthMessage("بارگذاری سرویس ورود از دو منبع انجام نشد. لطفاً صفحه را تازه‌سازی کنید؛ اگر مشکل ادامه داشت، دسترسی مرورگر به سرویس‌های بیرونی را بررسی کنید.",true);return}
  supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
  $("authForm").addEventListener("submit",handleAuthSubmit);
  document.querySelectorAll("[data-auth-open]").forEach(button=>button.addEventListener("click",()=>openAuth(button.dataset.authOpen||"login")));
