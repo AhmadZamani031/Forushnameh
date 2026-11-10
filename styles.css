@@ -370,3 +370,29 @@ html[data-theme="dark"] .customer-block{background:#f2f7fd!important;color:#2534
 
 .install-app-button{white-space:nowrap}
 @media(max-width:600px){.install-app-button{font-size:10px;padding:7px 9px}}
+
+/* Consistent light/dark appearance for the public and legal pages. */
+html[data-theme="dark"] body.public-site{background:#101a2b;color:#e4ecf7}
+html[data-theme="dark"] .public-header{background:#18253a;border-bottom:1px solid #33435b}
+html[data-theme="dark"] .public-nav a,html[data-theme="dark"] .public-footer a,html[data-theme="dark"] .public-footer button{color:#b7c6da}
+html[data-theme="dark"] .public-hero h1,html[data-theme="dark"] .public-section-heading h2,
+html[data-theme="dark"] .about-section h2,html[data-theme="dark"] .contact-section h2,
+html[data-theme="dark"] .standalone-page h1,html[data-theme="dark"] .standalone-page h2{color:#dce9fb}
+html[data-theme="dark"] .public-hero-copy>p,html[data-theme="dark"] .public-section-heading p,
+html[data-theme="dark"] .about-section p,html[data-theme="dark"] .contact-section p,
+html[data-theme="dark"] .public-trust,html[data-theme="dark"] .standalone-page>p,
+html[data-theme="dark"] .standalone-page li,html[data-theme="dark"] .legal-copy p,
+html[data-theme="dark"] .public-footer p,html[data-theme="dark"] .public-footer small{color:#9eacc0}
+html[data-theme="dark"] .public-proof,html[data-theme="dark"] .legal-copy,
+html[data-theme="dark"] .standalone-faq details{background:#18253a;border-color:#33435b;color:#e4ecf7}
+html[data-theme="dark"] .public-proof strong,html[data-theme="dark"] .standalone-faq summary,
+html[data-theme="dark"] .contact-note strong{color:#dce9fb}
+html[data-theme="dark"] .public-proof span,html[data-theme="dark"] .standalone-faq details p,
+html[data-theme="dark"] .contact-note span{color:#9eacc0}
+html[data-theme="dark"] .contact-note{background:#22334d;border-color:#40516b}
+html[data-theme="dark"] .public-footer{background:#141f31;border-top:1px solid #33435b}
+html[data-theme="dark"] .public-menu-toggle{background:#22334d;border-color:#40516b}
+html[data-theme="dark"] .public-menu-toggle span{background:#dce9fb}
+html[data-theme="dark"] .public-nav a:hover{background:#293b55}
+html[data-theme="dark"] .public-nav{border-color:#33435b}
+html[data-theme="dark"] .public-proof div{border-color:#33435b}
