@@ -121,6 +121,33 @@ async function loadBusinessSettings(requestedUserId=currentUser?.id){
  drawItems();preview();
  return true;
 }
+async function loadAccountProfile(user=currentUser){
+ if(!supabaseClient||!user?.id)return;
+ const {data,error}=await supabaseClient.from("profiles").select("id,full_name,phone").eq("id",user.id).maybeSingle();
+ if(error)throw error;
+ if(currentUser?.id!==user.id)return;
+ $("accountFullName").value=data?.full_name||user.user_metadata?.full_name||user.user_metadata?.name||"";
+ $("accountPhone").value=data?.phone||"";
+ $("accountEmailReadonly").value=user.email||"";
+ $("accountEmailStatus").textContent=user.email_confirmed_at?"ایمیل حساب تأیید شده است.":"ایمیل حساب هنوز تأیید نشده است.";
+ $("accountEmail").textContent=$("accountFullName").value.trim()||user.email||"حساب کاربری";
+}
+async function saveAccountProfile(){
+ const user=currentUser;if(!user?.id||!supabaseClient)return;
+ const name=$("accountFullName").value.trim(),phone=$("accountPhone").value.trim(),button=$("saveAccountProfile"),status=$("accountProfileStatus");
+ if(!name){status.textContent="لطفاً نام و نام خانوادگی را وارد کنید.";return}
+ if(phone.length>30){status.textContent="شماره تماس نباید بیشتر از ۳۰ نویسه باشد.";return}
+ button.disabled=true;status.textContent="در حال ذخیرهٔ اطلاعات حساب…";
+ try{
+  const {error:metadataError}=await supabaseClient.auth.updateUser({data:{full_name:name}});
+  if(metadataError)throw metadataError;
+  const {error}=await supabaseClient.from("profiles").upsert({id:user.id,full_name:name,phone},{onConflict:"id"});
+  if(error)throw error;
+  currentUser={...currentUser,user_metadata:{...(currentUser.user_metadata||{}),full_name:name}};
+  $("accountEmail").textContent=name;status.textContent="اطلاعات حساب با موفقیت ذخیره شد.";
+ }catch(error){status.textContent="ذخیرهٔ اطلاعات حساب انجام نشد: "+cloudError(error)}
+ finally{button.disabled=false}
+}
 async function deleteCurrentAccount(){
  const requestedUserId=currentUser?.id;
  if(!supabaseClient||!requestedUserId)return;
@@ -129,10 +156,10 @@ async function deleteCurrentAccount(){
  const phrase=$("deleteAccountPhrase").value.trim();
  const status=$("deleteAccountStatus");
  const button=$("deleteAccountButton");
- if(phrase!=="حذف حسابم"){status.textContent="برای ادامه، عبارت «حذف حسابم» را دقیقاً وارد کن.";return}
+ if(phrase!=="حذف حساب کاربری"){status.textContent="برای ادامه، عبارت «حذف حساب کاربری» را دقیقاً وارد کنید.";return}
  if(!email||email!==String(currentUser.email||"").trim().toLowerCase()){status.textContent="ایمیل واردشده با ایمیل حساب فعلی یکسان نیست.";return}
  if(!password){status.textContent="برای تأیید هویت، رمز عبور فعلی را وارد کن.";return}
- const confirmed=window.confirm("هشدار نهایی: حساب کاربری و تمام اطلاعات فروش، فاکتورها، دریافت‌ها و سوابق انبار برای همیشه حذف می‌شوند. این عملیات قابل بازگشت نیست. آیا مطمئنی؟");
+ const confirmed=window.confirm("هشدار نهایی: حساب کاربری و تمام اطلاعات فروش، فاکتورها، دریافت‌ها و سوابق انبار برای همیشه حذف می‌شوند. این عملیات قابل بازگشت نیست. آیا مطمئن هستید؟");
  if(!confirmed)return;
  button.disabled=true;status.textContent="در حال تأیید هویت و حذف امن اطلاعات حساب…";
  try{
@@ -146,7 +173,7 @@ async function deleteCurrentAccount(){
  }catch(error){
   let details=null;
   try{if(error?.context&&typeof error.context.clone==="function")details=await error.context.clone().json()}catch(_){}
-  status.textContent=details?.error||error?.message||"حذف حساب انجام نشد. وضعیت عملیات را بررسی کن.";
+  status.textContent=details?.error||error?.message||"حذف حساب انجام نشد. لطفاً وضعیت عملیات را بررسی کنید.";
   if(details?.retryable)status.textContent="اطلاعات کاری حذف شده‌اند اما حساب ورود باقی مانده است. دوباره وارد شو و عملیات حذف حساب را تکرار کن.";
  }finally{
   if(currentUser?.id===requestedUserId)button.disabled=false;
@@ -654,7 +681,7 @@ function init(){
  ["customerName","customerPhone"].forEach(id=>$(id).addEventListener("input",()=>{if($("customerPicker").value)$("customerPicker").value="";}));
  $("saveInvoice").addEventListener("click",saveInvoice);$("newInvoice").addEventListener("click",newInvoice);
  $("saveBusinessSettings").addEventListener("click",saveBusinessSettings);
- $("deleteAccountButton").addEventListener("click",deleteCurrentAccount);
+ $("deleteAccountButton").addEventListener("click",deleteCurrentAccount);$("saveAccountProfile").addEventListener("click",saveAccountProfile);
  $("reportPeriod").addEventListener("change",drawReports);$("reportCurrency").addEventListener("change",drawReports);
  $("exportReportPdf").addEventListener("click",exportReportPdf);$("exportReportCsv").addEventListener("click",exportReportCsv);
  $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]"),p=e.target.closest("[data-payment-invoice]"),v=e.target.closest("[data-void-invoice]");if(o){loadInvoice(o.dataset.openInvoice);return}if(p){openPaymentPanel(p.dataset.paymentInvoice);return}if(v&&!v.disabled)voidInvoice(v.dataset.voidInvoice)});
@@ -709,13 +736,13 @@ function showAuthenticatedApp(user){
  KEYS=Object.fromEntries(Object.entries(BASE_KEYS).map(([k,v])=>[k,`${v}.${user.id}`]));
  if(switchingAccount)resetUserWorkspace();
  currentUser=user;document.querySelector("main.page").hidden=false;
- $("publicSite").hidden=true;$("appTopbar").hidden=false;$("authScreen").hidden=true;$("accountEmail").hidden=false;$("accountEmail").textContent=user.email||"حساب کاربری";$("signOutButton").hidden=false;
+ $("publicSite").hidden=true;$("appTopbar").hidden=false;$("authScreen").hidden=true;$("accountEmail").hidden=false;$("accountEmail").textContent=user.user_metadata?.full_name||user.user_metadata?.name||user.email||"حساب کاربری";$("signOutButton").hidden=false;$("accountEmailReadonly").value=user.email||"";loadAccountProfile(user).catch(error=>{if(currentUser?.id===user.id)$("accountProfileStatus").textContent="بارگذاری اطلاعات حساب انجام نشد: "+cloudError(error)});
  if(!window.forushnamehInitialized){init();window.forushnamehInitialized=true}
  else{drawInvoices();loadCloudData().catch(error=>{if(currentUser?.id===user.id)alert("بارگذاری اطلاعات ابری انجام نشد: "+cloudError(error))})}
 }
 function showSignedOut(){
  currentUser=null;KEYS=Object.fromEntries(Object.entries(BASE_KEYS).map(([k,v])=>[k,`${v}.signed-out`]));resetUserWorkspace();
- $("authScreen").hidden=true;$("authPassword").value="";$("authConfirmPassword").value="";$("authFullName").value="";$("accountEmail").hidden=true;$("signOutButton").hidden=true;
+ $("authScreen").hidden=true;$("authPassword").value="";$("authConfirmPassword").value="";$("authFullName").value="";$("accountEmail").hidden=true;$("signOutButton").hidden=true;$("accountFullName").value="";$("accountPhone").value="";$("accountEmailReadonly").value="";$("accountProfileStatus").textContent="";
  document.querySelector("main.page").hidden=true;$("appTopbar").hidden=true;$("publicSite").hidden=false;setAuthMode("login");
 }
 async function handleAuthSubmit(event){
@@ -752,18 +779,20 @@ function setupPwa(){
  if(!("serviceWorker" in navigator))return;
  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(error=>console.warn("PWA service worker registration failed",error)));
  let installPrompt=null;
- const button=$("installAppButton");
- if(!button)return;
+ const button=$("installAppButton"),card=$("pwaInstallCard");
+ if(!button||!card)return;
+ const isInstalled=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
+ if(isInstalled){card.hidden=true;return;}
  window.addEventListener("beforeinstallprompt",event=>{
-  event.preventDefault();installPrompt=event;button.hidden=false;
+  event.preventDefault();installPrompt=event;card.hidden=false;
  });
  button.addEventListener("click",async()=>{
   if(!installPrompt)return;
   installPrompt.prompt();
   await installPrompt.userChoice;
-  installPrompt=null;button.hidden=true;
+  installPrompt=null;card.hidden=true;
  });
- window.addEventListener("appinstalled",()=>{installPrompt=null;button.hidden=true});
+ window.addEventListener("appinstalled",()=>{installPrompt=null;card.hidden=true});
 }
 setupPwa();
 const THEME_KEY="forushnameh.theme";
