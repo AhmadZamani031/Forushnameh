@@ -59,7 +59,7 @@ button:focus-visible{outline:3px solid #83b6f5;outline-offset:3px}
    await navigator.serviceWorker.ready;
    await new Promise(resolve=>{
     if(navigator.serviceWorker.controller?.scriptURL.includes("service-worker-retire.js")){resolve();return}
-    const done=()=>{if(navigator.serviceWorker.controller?.scriptURL.includes("retire=20261110")){navigator.serviceWorker.removeEventListener("controllerchange",done);resolve()}};
+    const done=()=>{if(navigator.serviceWorker.controller?.scriptURL.includes("service-worker-retire.js")){navigator.serviceWorker.removeEventListener("controllerchange",done);resolve()}};
     navigator.serviceWorker.addEventListener("controllerchange",done);
     setTimeout(()=>{navigator.serviceWorker.removeEventListener("controllerchange",done);resolve()},5000);
    });
