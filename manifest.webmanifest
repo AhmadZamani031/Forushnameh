@@ -1,0 +1,18 @@
+{
+  "id": "./index.html",
+  "name": "فروش‌نامه | مدیریت فروش",
+  "short_name": "فروش‌نامه",
+  "description": "مدیریت فارسی فروش، فاکتور، کالا، مشتری و انبار",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f8fc",
+  "theme_color": "#103b86",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {"src": "./app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}
