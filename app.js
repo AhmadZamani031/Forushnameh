@@ -466,7 +466,8 @@ async function exportReportPdf(){
   $("reportCountHint").textContent="ساخت PDF گزارش انجام نشد؛ دوباره تلاش کن.";
  }finally{btn.disabled=false}
 }
-\nfunction setupNavigation(){
+
+function setupNavigation(){
  const buttons=[...document.querySelectorAll("[data-page]")],views=[...document.querySelectorAll("[data-view]")];
  function showPage(name){
   buttons.forEach(b=>{const active=b.dataset.page===name;b.classList.toggle("active",active);b.setAttribute("aria-current",active?"page":"false")});
@@ -490,7 +491,8 @@ function init(){
  ["customerName","customerPhone"].forEach(id=>$(id).addEventListener("input",()=>{if($("customerPicker").value)$("customerPicker").value="";}));
  $("saveInvoice").addEventListener("click",saveInvoice);$("newInvoice").addEventListener("click",newInvoice);
  $("saveBusinessSettings").addEventListener("click",saveBusinessSettings);
- $("reportPeriod").addEventListener("change",drawReports);$("reportCurrency").addEventListener("change",drawReports);\n $("exportReportPdf").addEventListener("click",exportReportPdf);$("exportReportCsv").addEventListener("click",exportReportCsv);
+ $("reportPeriod").addEventListener("change",drawReports);$("reportCurrency").addEventListener("change",drawReports);
+ $("exportReportPdf").addEventListener("click",exportReportPdf);$("exportReportCsv").addEventListener("click",exportReportCsv);
  $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]");if(o)loadInvoice(o.dataset.openInvoice)});
  $("saveProduct").addEventListener("click",saveProduct);$("cancelProductEdit").addEventListener("click",clearProductForm);$("productSearch").addEventListener("input",drawProductList);
  $("productsList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-product]"),del=e.target.closest("[data-delete-product]");if(edit){editProduct(edit.dataset.editProduct);return}if(del&&confirm("این کالا غیرفعال شود؟ سوابق انبار و فاکتورهای مرتبط حفظ می‌شوند.")){(async()=>{const requestedUserId=currentUser?.id;if(!requestedUserId)return;try{const {error}=await supabaseClient.from("products").update({is_active:false}).eq("id",del.dataset.deleteProduct);if(currentUser?.id!==requestedUserId)return;if(error)throw error;await loadCloudData();if(currentUser?.id===requestedUserId)$("productStatus").textContent="کالا غیرفعال شد؛ سوابق آن حفظ شده است."}catch(error){if(currentUser?.id===requestedUserId)$("productStatus").textContent="غیرفعال‌سازی کالا انجام نشد: "+cloudError(error)}})()}});
