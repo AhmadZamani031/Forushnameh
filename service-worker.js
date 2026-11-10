@@ -1,4 +1,4 @@
-const CACHE_NAME="forushnameh-shell-v4";
+const CACHE_NAME="forushnameh-shell-v5";
 const APP_SHELL=[
  "./",
  "./index.html",
@@ -8,7 +8,7 @@ const APP_SHELL=[
  "./privacy.html",
  "./terms.html",
  "./styles.css?v=17",
- "./app.js?v=17",
+ "./app.js?v=18",
  "./site.js",
  "./favicon.svg",
  "./app-icon.svg",
