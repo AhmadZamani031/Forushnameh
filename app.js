@@ -320,7 +320,7 @@ async function saveInvoice(){
   await loadCloudData();if(currentUser?.id!==requestedUserId)return;
   $("savedStatus").textContent="فاکتور "+data.invoice_number+" با موفقیت صادر و در فضای ابری ثبت شد. موجودی کالاهای انتخاب‌شده نیز به‌روزرسانی شد.";
  }catch(error){if(currentUser?.id===requestedUserId)$("savedStatus").textContent="صدور فاکتور انجام نشد: "+cloudError(error)}
- finally{if(currentUser?.id===requestedUserId)btn.disabled=false}
+ finally{if(currentUser?.id===requestedUserId)btn.disabled=Boolean(editingInvoiceId)}
 }
 function setInvoiceReadOnly(readOnly){
  invoiceFields.forEach(id=>$(id).disabled=readOnly);
