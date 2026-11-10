@@ -1,4 +1,4 @@
-const CACHE_NAME="forushnameh-shell-v2";
+const CACHE_NAME="forushnameh-shell-v3";
 const APP_SHELL=[
  "./",
  "./index.html",
@@ -35,7 +35,7 @@ self.addEventListener("fetch",event=>{
    return response;
   }).catch(async()=>{
    const cached=await caches.match(request)||await caches.match("./index.html");
-   return cached||caches.match("./offline.html");
+   return await caches.match("./offline.html");
   }));
   return;
  }
