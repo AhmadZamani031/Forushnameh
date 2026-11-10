@@ -121,7 +121,38 @@ async function loadBusinessSettings(requestedUserId=currentUser?.id){
  drawItems();preview();
  return true;
 }
-async function saveBusinessSettings(){
+async 
+async function deleteCurrentAccount(){
+ const requestedUserId=currentUser?.id;
+ if(!supabaseClient||!requestedUserId)return;
+ const email=$("deleteAccountEmail").value.trim().toLowerCase();
+ const password=$("deleteAccountPassword").value;
+ const phrase=$("deleteAccountPhrase").value.trim();
+ const status=$("deleteAccountStatus");
+ const button=$("deleteAccountButton");
+ if(phrase!=="حذف حسابم"){status.textContent="برای ادامه، عبارت «حذف حسابم» را دقیقاً وارد کن.";return}
+ if(!email||email!==String(currentUser.email||"").trim().toLowerCase()){status.textContent="ایمیل واردشده با ایمیل حساب فعلی یکسان نیست.";return}
+ if(!password){status.textContent="برای تأیید هویت، رمز عبور فعلی را وارد کن.";return}
+ const confirmed=window.confirm("هشدار نهایی: حساب کاربری و تمام اطلاعات فروش، فاکتورها، دریافت‌ها و سوابق انبار برای همیشه حذف می‌شوند. این عملیات قابل بازگشت نیست. آیا مطمئنی؟");
+ if(!confirmed)return;
+ button.disabled=true;status.textContent="در حال تأیید هویت و حذف امن اطلاعات حساب…";
+ try{
+  const {data,error}=await supabaseClient.functions.invoke("delete-account",{body:{password,confirmEmail:email}});
+  if(error)throw error;
+  if(!data?.success)throw new Error(data?.error||"حذف حساب تأیید نشد.");
+  try{await supabaseClient.auth.signOut({scope:"local"})}catch(_){}
+  $("deleteAccountPassword").value="";$("deleteAccountPhrase").value="";
+  alert("حساب کاربری و اطلاعات مرتبط با موفقیت حذف شدند.");
+  showSignedOut();
+ }catch(error){
+  status.textContent=error?.context?.error||error?.message||"حذف حساب انجام نشد. اطلاعات حساب حذف نشده‌اند یا وضعیت عملیات را از پشتیبانی بررسی کن.";
+  if(error?.context?.retryable)status.textContent="اطلاعات کاری حذف شده‌اند اما حساب ورود باقی مانده است. دوباره وارد شو و عملیات حذف حساب را تکرار کن.";
+ }finally{
+  if(currentUser?.id===requestedUserId)button.disabled=false;
+ }
+}
+
+function saveBusinessSettings(){
  const requestedUserId=currentUser?.id;
  if(!supabaseClient||!requestedUserId)return;
  const business_name=$("businessName").value.trim();
@@ -622,6 +653,7 @@ function init(){
  ["customerName","customerPhone"].forEach(id=>$(id).addEventListener("input",()=>{if($("customerPicker").value)$("customerPicker").value="";}));
  $("saveInvoice").addEventListener("click",saveInvoice);$("newInvoice").addEventListener("click",newInvoice);
  $("saveBusinessSettings").addEventListener("click",saveBusinessSettings);
+ $("deleteAccountButton").addEventListener("click",deleteCurrentAccount);
  $("reportPeriod").addEventListener("change",drawReports);$("reportCurrency").addEventListener("change",drawReports);
  $("exportReportPdf").addEventListener("click",exportReportPdf);$("exportReportCsv").addEventListener("click",exportReportCsv);
  $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]"),p=e.target.closest("[data-payment-invoice]"),v=e.target.closest("[data-void-invoice]");if(o){loadInvoice(o.dataset.openInvoice);return}if(p){openPaymentPanel(p.dataset.paymentInvoice);return}if(v&&!v.disabled)voidInvoice(v.dataset.voidInvoice)});
