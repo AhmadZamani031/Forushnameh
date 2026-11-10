@@ -121,7 +121,6 @@ async function loadBusinessSettings(requestedUserId=currentUser?.id){
  drawItems();preview();
  return true;
 }
-async 
 async function deleteCurrentAccount(){
  const requestedUserId=currentUser?.id;
  if(!supabaseClient||!requestedUserId)return;
@@ -154,7 +153,7 @@ async function deleteCurrentAccount(){
  }
 }
 
-function saveBusinessSettings(){
+async function saveBusinessSettings(){
  const requestedUserId=currentUser?.id;
  if(!supabaseClient||!requestedUserId)return;
  const business_name=$("businessName").value.trim();
