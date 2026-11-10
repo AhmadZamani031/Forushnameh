@@ -13,6 +13,7 @@ const invoiceFields=["storeName","storePhone","storeAddress","customerName","cus
 let items=[{id:1,name:"محصول نمونه",quantity:1,price:250000,productId:""},{id:2,name:"خدمات",quantity:2,price:50000,productId:""}];
 let nextItemId=3, editingInvoiceId=null, editingProductId=null, editingCustomerId=null;
 let products=[], customers=[], movements=[], cloudInvoices=[], businessSettings=null;
+let currentReportRows=[];
 function read(key,fallback){try{const x=JSON.parse(localStorage.getItem(key)||"null");return Array.isArray(x)?x:fallback}catch(e){return fallback}}
 function write(key,value,statusId){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(e){if(statusId)$(statusId).textContent="ذخیره انجام نشد؛ فضای ذخیره‌سازی مرورگر ممکن است کافی نباشد.";return false}}
 function fa(n){return new Intl.NumberFormat("fa-IR",{maximumFractionDigits:2}).format(Number(n)||0)}
@@ -397,6 +398,7 @@ function drawReports(){
  const currency=currencyEl.value||businessSettings?.default_currency||currencies[0]||"تومان",all=cloudInvoices.filter(x=>x.status==="issued"&&(x.data?.currency||"تومان")===currency),now=new Date(),period=periodEl.value;
  let start=null;if(period==="month")start=new Date(now.getFullYear(),now.getMonth(),1);else if(period==="30days")start=new Date(now.getFullYear(),now.getMonth(),now.getDate()-29);else if(period==="year")start=new Date(now.getFullYear(),0,1);
  const scoped=all.filter(x=>{const d=parseInvoiceDate(x.data?.invoiceDateISO||x.data?.invoiceDate);return !start||(d&&d>=start&&d<=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59,999))});
+ currentReportRows=scoped;
  const sales=scoped.reduce((a,x)=>a+(Number(x.totalAmount)||0),0);
  $("reportSales").textContent=fa(sales);$("reportInvoices").textContent=fa(scoped.length);$("reportAverage").textContent=fa(scoped.length?sales/scoped.length:0);$("reportCurrencyLabel").textContent=currency;
  const buckets=[];for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),monthInvoices=all.filter(x=>{const date=parseInvoiceDate(x.data?.invoiceDateISO||x.data?.invoiceDate);return date&&date.getFullYear()===d.getFullYear()&&date.getMonth()===d.getMonth()});buckets.push({label:d.toLocaleDateString("fa-IR",{month:"short"}),value:monthInvoices.reduce((a,x)=>a+(Number(x.totalAmount)||0),0),count:monthInvoices.length})}
@@ -413,7 +415,58 @@ function drawReports(){
  $("reportCountHint").textContent=fa(scoped.length)+" فاکتور در بازهٔ انتخاب‌شده";
 }
 
-function setupNavigation(){
+
+function reportCsvCell(value){
+ const text=String(value??"");
+ const safe=/^[=+@\\-\\t\\r]/.test(text)?"'"+text:text;
+ return '"'+safe.replace(/"/g,'""')+'"';
+}
+function exportReportCsv(){
+ const rows=currentReportRows||[];
+ if(!rows.length){$("reportCountHint").textContent="برای خروجی گرفتن، در بازه و واحد پول انتخاب‌شده فاکتور معتبری وجود ندارد.";return}
+ const currency=$("reportCurrency").value||"تومان";
+ const lines=[
+  ["شماره فاکتور","تاریخ","مشتری","واحد پول","جمع اقلام","تخفیف","مالیات","مبلغ نهایی","وضعیت"].map(reportCsvCell).join(","),
+  ...rows.map(x=>[
+   x.data?.invoiceNumber||x.invoiceNumber||"",
+   x.data?.invoiceDate||"",
+   x.data?.customerName||"",
+   currency,
+   x.subtotal??"",
+   x.discountAmount??"",
+   x.taxAmount??"",
+   x.totalAmount??"",
+   "صادرشده"
+  ].map(reportCsvCell).join(","))
+ ];
+ const blob=new Blob(["\\uFEFF"+lines.join("\\r\\n")],{type:"text/csv;charset=utf-8"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="Forushnameh-sales-report-"+new Date().toISOString().slice(0,10)+".csv";a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function exportReportPdf(){
+ const btn=$("exportReportPdf"),target=document.querySelector('[data-view="reports"]');
+ if(!target)return;
+ if(typeof window.html2canvas!=="function"||!window.jspdf?.jsPDF){$("reportCountHint").textContent="ابزار ساخت PDF در دسترس نیست؛ اتصال اینترنت را بررسی کن.";return}
+ btn.disabled=true;
+ $("reportCountHint").textContent="در حال آماده‌سازی PDF گزارش…";
+ try{
+  const canvas=await window.html2canvas(target,{scale:2,backgroundColor:"#f5f8fc",useCORS:true,logging:false,onclone:doc=>{doc.querySelectorAll(".report-export-actions").forEach(el=>el.style.display="none")}});
+  const {jsPDF}=window.jspdf,pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+  const pageWidth=190,pageHeight=277,imageHeight=canvas.height*pageWidth/canvas.width;
+  const image=canvas.toDataURL("image/png");
+  const pages=Math.max(1,Math.ceil(imageHeight/pageHeight));
+  for(let page=0;page<pages;page++){
+   if(page>0)pdf.addPage();
+   pdf.addImage(image,"PNG",10,10-page*pageHeight,pageWidth,imageHeight,undefined,"FAST");
+  }
+  pdf.save("Forushnameh-sales-report-"+new Date().toISOString().slice(0,10)+".pdf");
+  $("reportCountHint").textContent="فایل PDF گزارش آماده شد.";
+ }catch(error){
+  $("reportCountHint").textContent="ساخت PDF گزارش انجام نشد؛ دوباره تلاش کن.";
+ }finally{btn.disabled=false}
+}
+\nfunction setupNavigation(){
  const buttons=[...document.querySelectorAll("[data-page]")],views=[...document.querySelectorAll("[data-view]")];
  function showPage(name){
   buttons.forEach(b=>{const active=b.dataset.page===name;b.classList.toggle("active",active);b.setAttribute("aria-current",active?"page":"false")});
@@ -437,7 +490,7 @@ function init(){
  ["customerName","customerPhone"].forEach(id=>$(id).addEventListener("input",()=>{if($("customerPicker").value)$("customerPicker").value="";}));
  $("saveInvoice").addEventListener("click",saveInvoice);$("newInvoice").addEventListener("click",newInvoice);
  $("saveBusinessSettings").addEventListener("click",saveBusinessSettings);
- $("reportPeriod").addEventListener("change",drawReports);$("reportCurrency").addEventListener("change",drawReports);
+ $("reportPeriod").addEventListener("change",drawReports);$("reportCurrency").addEventListener("change",drawReports);\n $("exportReportPdf").addEventListener("click",exportReportPdf);$("exportReportCsv").addEventListener("click",exportReportCsv);
  $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]");if(o)loadInvoice(o.dataset.openInvoice)});
  $("saveProduct").addEventListener("click",saveProduct);$("cancelProductEdit").addEventListener("click",clearProductForm);$("productSearch").addEventListener("input",drawProductList);
  $("productsList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-product]"),del=e.target.closest("[data-delete-product]");if(edit){editProduct(edit.dataset.editProduct);return}if(del&&confirm("این کالا غیرفعال شود؟ سوابق انبار و فاکتورهای مرتبط حفظ می‌شوند.")){(async()=>{const requestedUserId=currentUser?.id;if(!requestedUserId)return;try{const {error}=await supabaseClient.from("products").update({is_active:false}).eq("id",del.dataset.deleteProduct);if(currentUser?.id!==requestedUserId)return;if(error)throw error;await loadCloudData();if(currentUser?.id===requestedUserId)$("productStatus").textContent="کالا غیرفعال شد؛ سوابق آن حفظ شده است."}catch(error){if(currentUser?.id===requestedUserId)$("productStatus").textContent="غیرفعال‌سازی کالا انجام نشد: "+cloudError(error)}})()}});
