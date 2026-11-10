@@ -32,6 +32,7 @@
 | `index.html` | صفحهٔ اصلی و محیط مدیریت |
 | `styles.css` | طراحی واکنش‌گرا و راست‌چین |
 | `app.js` | منطق برنامه و ارتباط با Supabase |
+| `site.js` | منوی واکنش‌گرای صفحات عمومی |
 | `logo-forushnameh.svg` | لوگوی اصلی |
 | `favicon.svg` | نماد مرورگر |
 | `hero-dashboard.svg` | تصویر اختصاصی صفحهٔ اصلی |
