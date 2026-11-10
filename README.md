@@ -4,6 +4,8 @@
 
 **نسخهٔ آنلاین:** https://ahmadzamani031.github.io/Forushnameh/
 
+## نسخه فعلی: ۱۲
+
 ## قابلیت‌ها
 
 - ثبت‌نام، ورود، خروج، تأیید ایمیل و بازیابی رمز عبور با Supabase Auth
@@ -46,7 +48,7 @@
 | `logo-forushnameh.svg`, `logo-forushnameh-dark.svg` | لوگوی روشن و تاریک |
 | `hero-dashboard.svg`, `hero-dashboard-dark.svg` | تصویر معرفی روشن و تاریک |
 | `favicon.svg`, `app-icon.svg` | نماد مرورگر و آیکون نصب |
-| `CHANGELOG-v11.md` | تغییرات نسخه ۱۱ و اصلاحات تکمیلی |
+| `CHANGELOG-v11.md` و `CHANGELOG-v12.md` | تغییرات نسخه ۱۱ و اصلاحات تکمیلی |
 
 ## داده‌ها و امنیت
 
