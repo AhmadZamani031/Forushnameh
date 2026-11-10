@@ -288,3 +288,8 @@ input:focus,textarea:focus,select:focus{border-color:#6c9be0;box-shadow:0 0 0 3p
 .report-export-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin:0 0 18px}
 .report-export-actions .button{min-height:40px}
 @media(max-width:600px){.report-export-actions{display:grid;grid-template-columns:1fr 1fr}.report-export-actions .button{font-size:11px;padding:9px 8px}}
+
+/* Invoice payment panel */
+.payment-panel { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+.payment-panel h4 { margin: 18px 0 8px; }
+.payment-panel .management-form { margin-top: 10px; }
