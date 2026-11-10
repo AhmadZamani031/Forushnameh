@@ -462,8 +462,7 @@ async function backupImport(file){
   const refreshed=await loadCloudData();
   if(currentUser?.id!==requestedUserId)return;
   if(refreshed===false)return;
-  await loadInvoices();
-  if(currentUser?.id!==requestedUserId)return;
+  // loadCloudData already reloads invoices, items and payment history.
   const result=data||{};
   $("backupStatus").textContent="بازیابی با موفقیت انجام شد. کالا: "+fa(result.products||0)+"، مشتری: "+fa(result.customers||0)+"، فاکتور: "+fa(result.invoices||0)+"، اقلام: "+fa(result.items||0)+"، گردش انبار: "+fa(result.movements||0)+"، دریافت: "+fa(result.payments||0)+".";
  }catch(error){
