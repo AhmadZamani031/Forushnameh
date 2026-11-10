@@ -777,7 +777,7 @@ function authErrorMessage(error){
 }
 function setupPwa(){
  if(!("serviceWorker" in navigator))return;
-  // Service workers are temporarily disabled while online startup is stabilized.
+ window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(error=>console.warn("PWA service worker registration failed",error)));
  let installPrompt=null;
  const button=$("installAppButton"),card=$("pwaInstallCard");
  if(!button||!card)return;
@@ -821,7 +821,7 @@ function setupTheme(){
 setupTheme();
 async function startAuth(){
  document.querySelector("main.page").hidden=true;
- if(!window.supabase?.createClient){showSignedOut();showAuthMessage("بارگذاری سرویس ورود از دو منبع انجام نشد. لطفاً صفحه را تازه‌سازی کنید؛ اگر مشکل ادامه داشت، دسترسی مرورگر به سرویس‌های بیرونی را بررسی کنید.",true);return}
+ if(!window.supabase?.createClient){showSignedOut();showAuthMessage("کتابخانهٔ اتصال بارگذاری نشد؛ اتصال اینترنت را بررسی و صفحه را تازه‌سازی کن.",true);return}
  supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
  $("authForm").addEventListener("submit",handleAuthSubmit);
  document.querySelectorAll("[data-auth-open]").forEach(button=>button.addEventListener("click",()=>openAuth(button.dataset.authOpen||"login")));
