@@ -644,3 +644,9 @@ html[data-theme="dark"] .danger-zone .helper{color:#c3cedd}
 .pwa-install-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.9}
 .pwa-install-card[hidden]{display:none}
 @media(max-width:640px){.topbar{height:auto;min-height:68px;padding:8px 12px;gap:8px;flex-wrap:nowrap}.brand-logo{height:42px;max-width:34vw}.topbar-actions{gap:6px;flex:1;justify-content:flex-end}.account-email{max-width:30vw;padding:6px 8px;font-size:12px}.signout-button{font-size:11px;padding:7px 9px;white-space:nowrap}.topbar-actions .theme-toggle{flex:0 0 38px;width:38px;height:38px}.main-nav{gap:7px}.main-nav .nav-item{white-space:nowrap}.pwa-install-card{align-items:flex-start;flex-direction:column}}
+
+/* Keep both theme glyphs deterministic in light and dark mode. */
+.theme-toggle .theme-icon{display:none!important;width:20px;height:20px;overflow:visible}
+html[data-theme="light"] .theme-toggle .theme-icon-moon{display:block!important}
+html[data-theme="dark"] .theme-toggle .theme-icon-sun{display:block!important}
+.theme-toggle svg{flex:none}
