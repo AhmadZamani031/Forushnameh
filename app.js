@@ -63,7 +63,7 @@ async function loadCloudData(){
 }
 async function loadCloudInvoices(requestedUserId=currentUser?.id){
  if(!supabaseClient||!requestedUserId)return false;
- const invoiceColumns="id,invoice_number,invoice_date,status,currency,business_name_snapshot,business_phone_snapshot,business_address_snapshot,customer_name_snapshot,customer_phone_snapshot,notes,subtotal,discount_amount,tax_amount,total_amount,created_at";
+ const invoiceColumns="id,invoice_number,invoice_date,status,voided_at,void_reason,currency,business_name_snapshot,business_phone_snapshot,business_address_snapshot,customer_name_snapshot,customer_phone_snapshot,notes,subtotal,discount_amount,tax_amount,total_amount,created_at";
  const itemColumns="id,invoice_id,product_id,description,quantity,unit,unit_price,sort_order";
  const paymentColumns="id,invoice_id,payment_type,amount,payment_method,paid_at,reference,note,reversal_of,created_at";
  const rows=[];let from=0;const pageSize=1000;
@@ -94,7 +94,7 @@ async function loadCloudInvoices(requestedUserId=currentUser?.id){
   const payments=paymentGroups.get(row.id)||[],reversedIds=new Set(payments.filter(p=>p.type==="reversal").map(p=>p.reversalOf));
   const paidAmount=payments.reduce((sum,p)=>sum+(p.type==="receipt"?p.amount:-p.amount),0);
   const totalAmount=Number(row.total_amount)||0,balance=Math.max(0,totalAmount-paidAmount);
-  return {id:row.id,status:row.status,subtotal:Number(row.subtotal)||0,discountAmount:Number(row.discount_amount)||0,taxAmount:Number(row.tax_amount)||0,totalAmount,paidAmount,balance,paymentStatus:balance<=0.005?"paid":paidAmount>0?"partial":"unpaid",payments:payments.map(p=>({...p,reversed:reversedIds.has(p.id)})),data:{invoiceNumber:row.invoice_number||"",invoiceDate:formatJalaliDate(row.invoice_date),invoiceDateISO:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",discountAmount:String(Number(row.discount_amount)||0),taxAmount:String(Number(row.tax_amount)||0),notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at};
+  return {id:row.id,status:row.status,voidedAt:row.voided_at||null,voidReason:row.void_reason||"",subtotal:Number(row.subtotal)||0,discountAmount:Number(row.discount_amount)||0,taxAmount:Number(row.tax_amount)||0,totalAmount,paidAmount,balance,paymentStatus:balance<=0.005?"paid":paidAmount>0?"partial":"unpaid",payments:payments.map(p=>({...p,reversed:reversedIds.has(p.id)})),data:{invoiceNumber:row.invoice_number||"",invoiceDate:formatJalaliDate(row.invoice_date),invoiceDateISO:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",discountAmount:String(Number(row.discount_amount)||0),taxAmount:String(Number(row.tax_amount)||0),notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at};
  });
  drawInvoices();if(selectedPaymentInvoiceId)drawPaymentPanel();return true;
 }
@@ -158,12 +158,12 @@ async function saveBusinessSettings(){
 
 function drawItems(){
  const opts=products.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.code?" ("+esc(p.code)+")":""} — ${fa(p.price)} ${esc($("currency").value)}</option>`).join("");
- $("itemsEditor").innerHTML=items.map((it,i)=>`<div class="item-editor" data-item-id="${it.id}">
- <div class="item-editor-top"><strong>ردیف ${fa(i+1)}</strong><button type="button" class="remove-item" data-remove="${it.id}" ${items.length===1?"disabled":""}>حذف ردیف ×</button></div>
+ $("itemsEditor").innerHTML=items.length?items.map((it,i)=>`<div class="item-editor" data-item-id="${it.id}">
+ <div class="item-editor-top"><strong>ردیف ${fa(i+1)}</strong><button type="button" class="remove-item" data-remove="${it.id}" aria-label="حذف ردیف ${fa(i+1)}">حذف ردیف ×</button></div>
  <div class="field"><label>انتخاب از فهرست کالاها (اختیاری)</label><select data-field="productId" data-id="${it.id}"><option value="">ورود دستی / بدون انتخاب کالا</option>${opts}</select></div>
  <div class="item-fields"><div class="field"><label>نام کالا / خدمات</label><input data-field="name" data-id="${it.id}" value="${esc(it.name)}" placeholder="نام کالا"></div><div class="field"><label>تعداد</label><input data-field="quantity" data-id="${it.id}" value="${it.quantity}" inputmode="decimal" min="0" type="number"></div></div>
  <div class="item-price-row"><div class="field"><label>قیمت هر واحد</label><input data-field="price" data-id="${it.id}" value="${it.price}" inputmode="decimal" min="0" type="number"></div><div class="field"><label>مبلغ ردیف</label><input value="${fa(it.quantity*it.price)}" disabled></div></div>
- </div>`).join("");
+ </div>`).join(""):'<p class="helper item-empty">ردیفی در فاکتور وجود ندارد؛ برای افزودن ردیف جدید از دکمه «افزودن ردیف» استفاده کن.</p>';
  items.forEach(it=>{const s=$(`itemsEditor`).querySelector(`[data-field="productId"][data-id="${it.id}"]`);if(s)s.value=it.productId||""});
 }
 function preview(){
@@ -206,8 +206,37 @@ function drawInvoices(){
  if(!filtered.length){host.innerHTML='<p class="helper">فاکتوری با این معیارها پیدا نشد. فیلترها را تغییر بده یا پاک کن.</p>';return}
  host.innerHTML=filtered.map(x=>{
   const paymentStatus=x.paymentStatus==="paid"?"تسویه‌شده":x.paymentStatus==="partial"?"پرداخت جزئی":"پرداخت‌نشده";
-  return '<div class="saved-invoice"><div class="saved-invoice-info"><strong>'+esc(x.data.invoiceNumber||"بدون شماره")+' — '+esc(x.data.customerName||"بدون نام مشتری")+'</strong><span>'+esc(x.data.invoiceDate||"بدون تاریخ")+' · '+fa(x.totalAmount)+' '+esc(x.data.currency||"تومان")+' · '+(x.status==="issued"?"صادرشده":esc(x.status||""))+'</span><span>وضعیت پرداخت: '+paymentStatus+' · دریافتی: '+fa(x.paidAmount)+' · مانده: '+fa(x.balance)+' '+esc(x.data.currency||"تومان")+'</span></div><div class="saved-invoice-actions"><button class="button button-light" data-open-invoice="'+esc(x.id)+'">جزئیات و چاپ</button><button class="button button-light" data-payment-invoice="'+esc(x.id)+'">'+(x.balance>0?"ثبت دریافت":"سوابق دریافت")+'</button></div></div>';
+  const isVoid=x.status==="void";
+  const statusLabel=isVoid?"باطل‌شده":x.status==="issued"?"صادرشده":esc(x.status||"");
+  const paymentAction=!isVoid?'<button class="button button-light" data-payment-invoice="'+esc(x.id)+'">'+(x.balance>0.005?"ثبت دریافت":"سوابق دریافت")+'</button>':"";
+  const voidAction=!isVoid?'<button class="button button-danger" data-void-invoice="'+esc(x.id)+'" '+(x.paidAmount>0.005?'disabled title="ابتدا تمام دریافت‌های این فاکتور را برگشت بده"': 'title="ابطال فاکتور و بازگرداندن موجودی کالا"')+'>ابطال فاکتور</button>':"";
+  const reason=isVoid&&x.voidReason?'<span>دلیل ابطال: '+esc(x.voidReason)+'</span>':"";
+  return '<div class="saved-invoice'+(isVoid?' invoice-voided':'')+'"><div class="saved-invoice-info"><strong>'+esc(x.data.invoiceNumber||"بدون شماره")+' — '+esc(x.data.customerName||"بدون نام مشتری")+'</strong><span>'+esc(x.data.invoiceDate||"بدون تاریخ")+' · '+fa(x.totalAmount)+' '+esc(x.data.currency||"تومان")+' · '+statusLabel+'</span><span>وضعیت پرداخت: '+paymentStatus+' · دریافتی: '+fa(x.paidAmount)+' · مانده: '+fa(x.balance)+' '+esc(x.data.currency||"تومان")+'</span>'+reason+'</div><div class="saved-invoice-actions"><button class="button button-light" data-open-invoice="'+esc(x.id)+'">جزئیات و چاپ</button>'+paymentAction+voidAction+'</div></div>';
  }).join("");
+}
+
+async function voidInvoice(invoiceId){
+ const requestedUserId=currentUser?.id,invoice=cloudInvoices.find(x=>x.id===invoiceId);
+ if(!requestedUserId||!invoice||invoice.status!=="issued")return;
+ if(invoice.paidAmount>0.005){
+  alert("برای ابطال فاکتور، ابتدا باید تمام دریافت‌های آن را از بخش سوابق دریافت برگشت بدهی.");
+  return;
+ }
+ const reason=prompt("دلیل ابطال فاکتور (اختیاری):","");if(reason===null)return;
+ if(reason.trim().length>500){alert("دلیل ابطال حداکثر ۵۰۰ نویسه است.");return}
+ const message="فاکتور "+(invoice.data.invoiceNumber||"")+
+  " باطل می‌شود. موجودی کالاهای فروخته‌شده به انبار بازمی‌گردد. این عملیات قابل برگشت نیست. ادامه می‌دهی؟";
+ if(!confirm(message))return;
+ const host=$("savedInvoices");host.setAttribute("aria-busy","true");
+ try{
+  const {data,error}=await supabaseClient.rpc("forushnameh_void_invoice",{p_invoice_id:invoice.id,p_reason:reason.trim()});
+  if(error)throw error;
+  if(currentUser?.id!==requestedUserId)return;
+  await loadCloudData();if(currentUser?.id!==requestedUserId)return;
+  $("invoiceFilterStatus").textContent="فاکتور "+(data?.invoice_number||invoice.data.invoiceNumber)+" با موفقیت باطل شد و موجودی کالاهای آن بازگشت داده شد.";
+ }catch(error){
+  if(currentUser?.id===requestedUserId)alert("ابطال فاکتور انجام نشد: "+cloudError(error));
+ }finally{host.removeAttribute("aria-busy")}
 }
 function applyInvoiceFilters(){
  if(!readInvoiceFilters())return;
@@ -235,13 +264,13 @@ function drawPaymentPanel(){
  }).join("");
 }
 function openPaymentPanel(invoiceId){
- const invoice=cloudInvoices.find(x=>x.id===invoiceId);if(!invoice)return;
+ const invoice=cloudInvoices.find(x=>x.id===invoiceId);if(!invoice||invoice.status!=="issued")return;
  selectedPaymentInvoiceId=invoiceId;$("paymentAmount").value=invoice.balance>0?invoice.balance.toFixed(2):"";
  $("paymentMethod").value="cash";$("paymentReference").value="";$("paymentNote").value="";$("paymentStatus").textContent="";
  drawPaymentPanel();$("paymentPanel").scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 async function savePayment(){
- const requestedUserId=currentUser?.id,invoice=cloudInvoices.find(x=>x.id===selectedPaymentInvoiceId);if(!requestedUserId||!invoice)return;
+ const requestedUserId=currentUser?.id,invoice=cloudInvoices.find(x=>x.id===selectedPaymentInvoiceId);if(!requestedUserId||!invoice||invoice.status!=="issued")return;
  const amount=Number($("paymentAmount").value),method=$("paymentMethod").value;
  if(!Number.isFinite(amount)||amount<=0){$("paymentStatus").textContent="مبلغ دریافتی باید بیشتر از صفر باشد.";return}
  if(amount>invoice.balance+0.005){$("paymentStatus").textContent="مبلغ دریافتی نمی‌تواند از مانده فاکتور بیشتر باشد.";return}
@@ -585,7 +614,7 @@ function init(){
  invoiceFields.forEach(id=>{$(id).addEventListener("input",preview);$(id).addEventListener("change",preview)});
  $("itemsEditor").addEventListener("input",e=>{const el=e.target,it=items.find(x=>x.id===Number(el.dataset.id)),f=el.dataset.field;if(!it||!f)return;if(f==="name")it.name=el.value;if(f==="quantity")it.quantity=num(el.value);if(f==="price")it.price=num(el.value);preview()});
  $("itemsEditor").addEventListener("change",e=>{const el=e.target;if(el.dataset.field==="productId"){const it=items.find(x=>x.id===Number(el.dataset.id)),p=productById(el.value);if(!it)return;it.productId=el.value;if(p){it.name=p.name;it.price=p.price;drawItems();preview()}}});
- $("itemsEditor").addEventListener("click",e=>{const b=e.target.closest("[data-remove]");if(!b||items.length===1)return;items=items.filter(x=>x.id!==Number(b.dataset.remove));drawItems();preview()});
+ $("itemsEditor").addEventListener("click",e=>{const b=e.target.closest("[data-remove]");if(!b)return;items=items.filter(x=>x.id!==Number(b.dataset.remove));drawItems();preview()});
  $("addItem").addEventListener("click",()=>{items.push({id:nextItemId++,name:"",quantity:1,price:0,productId:""});drawItems();preview()});
  $("currency").addEventListener("change",()=>{drawItems();preview()});
  $("customerPicker").addEventListener("change",()=>{const c=customers.find(x=>x.id===$("customerPicker").value);if(c){$("customerName").value=c.name;$("customerPhone").value=c.phone;$("previewCustomerName").textContent=c.name;$("previewCustomerPhone").textContent=c.phone?`تلفن: ${c.phone}`:""}});
@@ -594,7 +623,7 @@ function init(){
  $("saveBusinessSettings").addEventListener("click",saveBusinessSettings);
  $("reportPeriod").addEventListener("change",drawReports);$("reportCurrency").addEventListener("change",drawReports);
  $("exportReportPdf").addEventListener("click",exportReportPdf);$("exportReportCsv").addEventListener("click",exportReportCsv);
- $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]"),p=e.target.closest("[data-payment-invoice]");if(o){loadInvoice(o.dataset.openInvoice);return}if(p)openPaymentPanel(p.dataset.paymentInvoice)});
+ $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]"),p=e.target.closest("[data-payment-invoice]"),v=e.target.closest("[data-void-invoice]");if(o){loadInvoice(o.dataset.openInvoice);return}if(p){openPaymentPanel(p.dataset.paymentInvoice);return}if(v&&!v.disabled)voidInvoice(v.dataset.voidInvoice)});
  ["invoiceSearch","invoicePaymentFilter","invoiceDateFrom","invoiceDateTo"].forEach(id=>$(id).addEventListener(id==="invoiceSearch"?"input":"change",applyInvoiceFilters));
  $("clearInvoiceFilters").addEventListener("click",clearInvoiceFilters);
  $("printInvoice").addEventListener("click",()=>window.print());
@@ -720,7 +749,7 @@ function setupTheme(){
  let mode="light";
  try{mode=localStorage.getItem(THEME_KEY)==="dark"?"dark":"light";localStorage.setItem(THEME_KEY,mode)}catch(error){}
  applyTheme(mode);
- document.querySelectorAll("[data-theme-toggle]").forEach(button=>button.addEventListener("click",()=>{
+ document.querySelectorAll("#appTopbar [data-theme-toggle]").forEach(button=>button.addEventListener("click",()=>{
   const next=document.documentElement.dataset.theme==="dark"?"light":"dark";
   try{localStorage.setItem(THEME_KEY,next)}catch(error){}
   applyTheme(next);
