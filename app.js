@@ -401,7 +401,7 @@ async function backupExport(){
  const requestedUserId=currentUser?.id;
  if(!supabaseClient||!requestedUserId){$("backupStatus").textContent="برای تهیهٔ پشتیبان ابتدا وارد حساب کاربری شو.";return}
  const btn=$("exportData");btn.disabled=true;
- $("backupStatus").textContent="در حال دریافت همهٔ اطلاعات از فضای ابری…";
+ $("backupStatus").textContent="در حال دریافت سوابق کامل از فضای ابری…";
  try{
   async function fetchAll(table,columns,identityColumn="id"){
    const result=[];let from=0;const pageSize=1000;
@@ -414,61 +414,63 @@ async function backupExport(){
    }
    return result;
   }
-  const [productRows,customerRows,movementRows,invoiceRows,itemRows,paymentRows,settingsRows,profileRows]=await Promise.all([
-   fetchAll("products","id,name,sku,unit,sale_price,stock_on_hand,min_stock,note,is_active"),
-   fetchAll("customers","id,name,phone,email,address,note,is_active"),
-   fetchAll("inventory_movements","id,product_id,movement_type,quantity_delta,description,reference,occurred_at"),
-   fetchAll("invoices","id,invoice_number,invoice_date,status,currency,business_name_snapshot,business_phone_snapshot,business_address_snapshot,customer_name_snapshot,customer_phone_snapshot,notes,subtotal,discount_amount,tax_amount,total_amount,created_at"),
-   fetchAll("invoice_items","id,invoice_id,product_id,description,quantity,unit,unit_price,sort_order"),
+  const [productsRows,customersRows,movementsRows,invoicesRows,itemsRows,paymentsRows,settingsRows]=await Promise.all([
+   fetchAll("products","id,name,sku,unit,sale_price,purchase_price,stock_on_hand,min_stock,note,is_active,created_at,updated_at"),
+   fetchAll("customers","id,name,phone,email,address,note,is_active,created_at,updated_at"),
+   fetchAll("inventory_movements","id,product_id,invoice_id,movement_type,quantity_delta,description,reference,occurred_at,created_at"),
+   fetchAll("invoices","id,customer_id,invoice_number,invoice_date,status,currency,business_name_snapshot,business_phone_snapshot,business_address_snapshot,customer_name_snapshot,customer_phone_snapshot,notes,subtotal,discount_amount,tax_amount,total_amount,created_at,updated_at"),
+   fetchAll("invoice_items","id,invoice_id,product_id,description,quantity,unit,unit_price,line_total,sort_order,created_at"),
    fetchAll("invoice_payments","id,invoice_id,payment_type,amount,payment_method,paid_at,reference,note,reversal_of,created_at"),
-   fetchAll("business_settings","user_id,business_name,phone,address,default_currency,invoice_prefix,next_invoice_number,created_at","user_id"),
-   fetchAll("profiles","id,full_name,created_at")
+   fetchAll("business_settings","user_id,business_name,phone,address,default_currency,invoice_prefix,next_invoice_number,created_at,updated_at","user_id")
   ]);
   if(currentUser?.id!==requestedUserId)return;
-  const allProducts=productRows.map(mapCloudProduct);
-  const allCustomers=customerRows.map(mapCloudCustomer);
-  const itemGroups=new Map();
-  itemRows.forEach(row=>{if(!itemGroups.has(row.invoice_id))itemGroups.set(row.invoice_id,[]);itemGroups.get(row.invoice_id).push({id:row.id,name:row.description||"",quantity:Number(row.quantity)||0,price:Number(row.unit_price)||0,productId:row.product_id||"",unit:row.unit||"عدد"})});
-  const allInvoices=invoiceRows.map(row=>({id:row.id,status:row.status,totalAmount:Number(row.total_amount)||0,data:{invoiceNumber:row.invoice_number||"",invoiceDate:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",discountAmount:String(Number(row.discount_amount)||0),taxAmount:String(Number(row.tax_amount)||0),notes:row.notes||""},items:itemGroups.get(row.id)||[],createdAt:row.created_at}));
-  const allMovements=movementRows.map(m=>{
-   const p=allProducts.find(x=>x.id===m.product_id);
-   return {id:m.id,kind:m.movement_type==="purchase"||m.movement_type==="opening"?"in":m.movement_type==="sale"?"sale":"return",productId:m.product_id,productName:p?.name||"کالای حذف‌شده",quantity:Math.abs(Number(m.quantity_delta)||0),description:m.description||"",reference:m.reference||"",date:m.occurred_at};
-  });
-  const payload={app:"ForushNameh",formatVersion:5,createdAt:new Date().toISOString(),profile:profileRows[0]||null,businessSettings:settingsRows[0]||null,invoices:allInvoices,invoiceItems:itemRows,invoicePayments:paymentRows,products:allProducts,customers:allCustomers,movements:allMovements};
+  if(settingsRows.length!==1)throw new Error("تنظیمات کسب‌وکار برای تهیه پشتیبان کامل در دسترس نیست.");
+  const payload={app:"ForushNameh",formatVersion:6,createdAt:new Date().toISOString(),records:{
+   businessSettings:settingsRows[0],products:productsRows,customers:customersRows,
+   invoices:invoicesRows,items:itemsRows,movements:movementsRows,payments:paymentsRows
+  }};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob),a=document.createElement("a");
-  a.href=url;a.download=`ForushNameh-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();
+  a.href=url;a.download="ForushNameh-backup-v6-"+new Date().toISOString().slice(0,10)+".json";a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
-  $("backupStatus").textContent="فایل پشتیبان از کالاها، مشتریان، فاکتورها، دریافت‌ها، برگشت‌ها و گردش‌های انبار ساخته شد.";
+  $("backupStatus").textContent="پشتیبان کامل نسخه ۶ ساخته شد؛ تمام ستون‌های کالا، مشتری، فاکتور، اقلام، گردش انبار و دریافت‌ها حفظ شده‌اند.";
  }catch(error){
-  if(currentUser?.id===requestedUserId)$("backupStatus").textContent="تهیهٔ پشتیبان کامل انجام نشد: "+cloudError(error);
- }finally{
-  if(currentUser?.id===requestedUserId)btn.disabled=false;
- }
+  if(currentUser?.id===requestedUserId)$("backupStatus").textContent="تهیه پشتیبان کامل نشد: "+cloudError(error);
+ }finally{if(currentUser?.id===requestedUserId)btn.disabled=false}
 }
 async function backupImport(file){
+ const input=$("importData"),requestedUserId=currentUser?.id;
  if(!file)return;
- $("backupStatus").textContent="بازیابی پشتیبان در فضای ابری در مرحلهٔ بعد اضافه می‌شود؛ در حال حاضر فقط خروجی گرفتن فعال است.";
- $("importData").value="";
- return;
+ if(!supabaseClient||!requestedUserId){$("backupStatus").textContent="برای بازیابی ابتدا وارد حساب کاربری شو.";input.value="";return}
+ const btn=$("importData");btn.disabled=true;
  try{
-  const x=JSON.parse(await file.text());
-  if(x.app!=="ForushNameh"||!Array.isArray(x.invoices)||!Array.isArray(x.products)||!Array.isArray(x.customers))throw Error("invalid");
-  if(!confirm("بازیابی، فاکتورها، کالاها و مشتریان فعلی این مرورگر را جایگزین می‌کند. ادامه می‌دهی؟"))return;
-  const restoredMovements=Array.isArray(x.movements)?x.movements:[];
-  const keys=[KEYS.invoices,KEYS.products,KEYS.customers,KEYS.movements],before=keys.map(k=>localStorage.getItem(k));
-  try{
-   const values=[x.invoices,x.products,x.customers,restoredMovements];
-   keys.forEach((k,i)=>localStorage.setItem(k,JSON.stringify(values[i])));
-   products=x.products;customers=x.customers;movements=restoredMovements;
-   drawInvoices();drawProductList();drawCustomerList();drawCustomerPicker();drawStockPicker();drawMovements();drawItems();drawDashboard();
-   $("backupStatus").textContent="بازیابی اطلاعات انجام شد.";
-  }catch(storageError){
-   keys.forEach((k,i)=>{if(before[i]===null)localStorage.removeItem(k);else localStorage.setItem(k,before[i])});
-   $("backupStatus").textContent="ذخیرهٔ پشتیبان کامل نشد؛ اطلاعات قبلی حفظ شدند. فضای ذخیره‌سازی مرورگر را بررسی کن.";
-  }
- }catch(e){$("backupStatus").textContent="فایل انتخاب‌شده معتبر نیست یا قابل خواندن نیست."}
- $("importData").value="";
+  if(file.size>25*1024*1024)throw new Error("حجم فایل از ۲۵ مگابایت بیشتر است.");
+  const backup=JSON.parse(await file.text());
+  if(currentUser?.id!==requestedUserId)return;
+  if(backup?.app!=="ForushNameh"||backup?.formatVersion!==6||!backup.records||typeof backup.records!=="object")throw new Error("این فایل پشتیبان معتبر یا نسخه ۶ نیست. ابتدا یک پشتیبان جدید از نسخه فعلی تهیه کن.");
+  const r=backup.records;
+  const arrays=["products","customers","invoices","items","movements","payments"];
+  for(const key of arrays)if(!Array.isArray(r[key]))throw new Error("بخش "+key+" در فایل پشتیبان ناقص است.");
+  if(!r.businessSettings||typeof r.businessSettings!=="object"||Array.isArray(r.businessSettings))throw new Error("تنظیمات کسب‌وکار در فایل موجود نیست.");
+  const counts=arrays.map(key=>fa(r[key].length)).join("، ");
+  const warning="بازیابی فقط در حسابی مجاز است که هنوز هیچ کالا، مشتری، فاکتور، قلم فاکتور، گردش انبار یا دریافتی ندارد. اطلاعات فعلی حذف یا جایگزین نمی‌شوند.\n\nتعداد رکوردها (کالا، مشتری، فاکتور، اقلام، گردش، دریافت): "+counts+"\n\nآیا بازیابی را شروع می‌کنی؟";
+  if(!confirm(warning))return;
+  $("backupStatus").textContent="در حال اعتبارسنجی و بازیابی اتمیک اطلاعات در فضای ابری…";
+  const {data,error}=await supabaseClient.rpc("forushnameh_restore_backup",{p_backup:backup});
+  if(error)throw error;
+  if(currentUser?.id!==requestedUserId)return;
+  const refreshed=await loadCloudData();
+  if(currentUser?.id!==requestedUserId)return;
+  if(refreshed===false)return;
+  await loadInvoices();
+  if(currentUser?.id!==requestedUserId)return;
+  const result=data||{};
+  $("backupStatus").textContent="بازیابی با موفقیت انجام شد. کالا: "+fa(result.products||0)+"، مشتری: "+fa(result.customers||0)+"، فاکتور: "+fa(result.invoices||0)+"، اقلام: "+fa(result.items||0)+"، گردش انبار: "+fa(result.movements||0)+"، دریافت: "+fa(result.payments||0)+".";
+ }catch(error){
+  if(currentUser?.id===requestedUserId)$("backupStatus").textContent="بازیابی انجام نشد و تراکنش برگشت داده شد: "+cloudError(error);
+ }finally{
+  input.value="";btn.disabled=false;
+ }
 }
 
 
