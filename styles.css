@@ -254,3 +254,33 @@ label{color:#526783}
 input,textarea,select{border-color:#dfe7f1;background:#fbfcfe}
 input:focus,textarea:focus,select:focus{border-color:#6c9be0;box-shadow:0 0 0 3px #174b9117}
 .panel,.report-stat,.report-inner{border-color:var(--line)}
+
+/* ناوبری عمومی واکنش‌گرا */
+.public-header{position:relative;z-index:20}
+.public-menu-toggle{display:none;width:42px;height:42px;border:1px solid #dce5f1;border-radius:12px;background:#fff;padding:10px;cursor:pointer;align-items:center;justify-content:center;flex-direction:column;gap:5px}
+.public-menu-toggle span{display:block;width:18px;height:2px;border-radius:3px;background:#174b91;transition:transform .18s ease,opacity .18s ease}
+.public-menu-toggle[aria-expanded="true"] span:first-child{transform:translateY(7px) rotate(45deg)}
+.public-menu-toggle[aria-expanded="true"] span:nth-child(2){opacity:0}
+.public-menu-toggle[aria-expanded="true"] span:last-child{transform:translateY(-7px) rotate(-45deg)}
+.public-nav a:focus-visible,.public-header a:focus-visible,.public-header button:focus-visible,.public-menu-toggle:focus-visible{outline:3px solid #8ab4ee;outline-offset:3px;border-radius:8px}
+.legal-summary{max-width:850px;margin:auto;background:#fff;border:1px solid #e5ebf3;border-radius:17px;padding:22px 26px}
+.legal-summary p{font-size:13px;line-height:2.2;color:#718198;margin:0 0 12px}
+.public-section-heading>p{max-width:760px;color:#718198;font-size:13px;line-height:2.1}
+@media(max-width:900px){
+ .public-menu-toggle{display:flex;order:3}
+ .public-header{flex-wrap:wrap;gap:10px}
+ .public-header-actions{margin-right:auto}
+ .public-nav{display:none;order:4;flex:1 0 100%;width:100%;padding:10px 4px 14px;border-top:1px solid #e8edf4;align-items:stretch;flex-direction:column;gap:0}
+ .public-nav.is-open{display:flex}
+ .public-nav a{padding:11px 10px;border-radius:9px}
+ .public-nav a:hover{background:#eef4fb}
+}
+@media(max-width:600px){
+ .public-header{min-height:70px;padding:8px 14px}
+ .public-brand img{width:145px;height:auto;max-height:48px}
+ .public-header-actions{gap:6px}
+ .public-header-actions .button{padding:8px 11px;font-size:11px}
+ .public-menu-toggle{width:39px;height:39px}
+ .legal-summary{padding:17px}
+}
+@media(prefers-reduced-motion:reduce){.public-menu-toggle span{transition:none}}
