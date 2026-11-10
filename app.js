@@ -418,7 +418,7 @@ function drawReports(){
 
 function reportCsvCell(value){
  const text=String(value??"");
- const safe=/^[=+@\- \t\r]/.test(text)?"'"+text:text;
+ const first=text.charCodeAt(0),safe=[61,43,64,45,9,13].includes(first)?"'"+text:text;
  return '"'+safe.replace(/"/g,'""')+'"';
 }
 function exportReportCsv(){
