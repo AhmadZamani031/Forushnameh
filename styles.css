@@ -293,3 +293,5 @@ input:focus,textarea:focus,select:focus{border-color:#6c9be0;box-shadow:0 0 0 3p
 .payment-panel { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
 .payment-panel h4 { margin: 18px 0 8px; }
 .payment-panel .management-form { margin-top: 10px; }
+
+#paymentPanel[hidden] { display: none !important; }
