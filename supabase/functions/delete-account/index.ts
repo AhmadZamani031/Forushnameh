@@ -2,7 +2,6 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const allowedOrigins = new Set([
   "https://forushnameh.vercel.app",
-  "https://ahmadzamani031.github.io",
 ]);
 
 function corsHeaders(origin: string | null) {
