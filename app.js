@@ -13,6 +13,7 @@ const invoiceFields=["storeName","storePhone","storeAddress","customerName","cus
 let items=[{id:1,name:"محصول نمونه",quantity:1,price:250000,productId:""},{id:2,name:"خدمات",quantity:2,price:50000,productId:""}];
 let nextItemId=3, editingInvoiceId=null, editingProductId=null, editingCustomerId=null;
 let products=[], customers=[], movements=[], cloudInvoices=[], businessSettings=null;
+let selectedPaymentInvoiceId=null;
 let currentReportRows=[];
 function read(key,fallback){try{const x=JSON.parse(localStorage.getItem(key)||"null");return Array.isArray(x)?x:fallback}catch(e){return fallback}}
 function write(key,value,statusId){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(e){if(statusId)$(statusId).textContent="ذخیره انجام نشد؛ فضای ذخیره‌سازی مرورگر ممکن است کافی نباشد.";return false}}
@@ -63,36 +64,38 @@ async function loadCloudInvoices(requestedUserId=currentUser?.id){
  if(!supabaseClient||!requestedUserId)return false;
  const invoiceColumns="id,invoice_number,invoice_date,status,currency,business_name_snapshot,business_phone_snapshot,business_address_snapshot,customer_name_snapshot,customer_phone_snapshot,notes,subtotal,discount_amount,tax_amount,total_amount,created_at";
  const itemColumns="id,invoice_id,product_id,description,quantity,unit,unit_price,sort_order";
+ const paymentColumns="id,invoice_id,payment_type,amount,payment_method,paid_at,reference,note,reversal_of,created_at";
  const rows=[];let from=0;const pageSize=1000;
  while(true){
-  const {data,error}=await supabaseClient.from("invoices").select(invoiceColumns)
-   .order("created_at",{ascending:false}).order("id",{ascending:false})
-   .range(from,from+pageSize-1);
-  if(currentUser?.id!==requestedUserId)return false;
-  if(error)throw error;
-  const batch=data||[];rows.push(...batch);
-  if(batch.length<pageSize)break;
-  from+=pageSize;
+  const {data,error}=await supabaseClient.from("invoices").select(invoiceColumns).order("created_at",{ascending:false}).order("id",{ascending:false}).range(from,from+pageSize-1);
+  if(currentUser?.id!==requestedUserId)return false;if(error)throw error;
+  const batch=data||[];rows.push(...batch);if(batch.length<pageSize)break;from+=pageSize;
  }
- const ids=rows.map(x=>x.id),itemRows=[];
- // Keep each IN filter compact and paginate invoice lines independently.
+ const ids=rows.map(x=>x.id),itemRows=[],paymentRows=[];
  for(let i=0;i<ids.length;i+=100){
   const idBatch=ids.slice(i,i+100);let itemFrom=0;
   while(true){
-   const {data,error}=await supabaseClient.from("invoice_items").select(itemColumns)
-    .in("invoice_id",idBatch).order("invoice_id").order("sort_order").order("id")
-    .range(itemFrom,itemFrom+pageSize-1);
-   if(currentUser?.id!==requestedUserId)return false;
-   if(error)throw error;
-   const batch=data||[];itemRows.push(...batch);
-   if(batch.length<pageSize)break;
-   itemFrom+=pageSize;
+   const {data,error}=await supabaseClient.from("invoice_items").select(itemColumns).in("invoice_id",idBatch).order("invoice_id").order("sort_order").order("id").range(itemFrom,itemFrom+pageSize-1);
+   if(currentUser?.id!==requestedUserId)return false;if(error)throw error;
+   const batch=data||[];itemRows.push(...batch);if(batch.length<pageSize)break;itemFrom+=pageSize;
+  }
+  let paymentFrom=0;
+  while(true){
+   const {data,error}=await supabaseClient.from("invoice_payments").select(paymentColumns).in("invoice_id",idBatch).order("paid_at",{ascending:false}).order("id",{ascending:false}).range(paymentFrom,paymentFrom+pageSize-1);
+   if(currentUser?.id!==requestedUserId)return false;if(error)throw error;
+   const batch=data||[];paymentRows.push(...batch);if(batch.length<pageSize)break;paymentFrom+=pageSize;
   }
  }
- const grouped=new Map();
+ const grouped=new Map(),paymentGroups=new Map();
  itemRows.forEach(row=>{if(!grouped.has(row.invoice_id))grouped.set(row.invoice_id,[]);grouped.get(row.invoice_id).push({id:row.id,name:row.description||"",quantity:Number(row.quantity)||0,price:Number(row.unit_price)||0,productId:row.product_id||"",unit:row.unit||"عدد"})});
- cloudInvoices=rows.map(row=>({id:row.id,status:row.status,subtotal:Number(row.subtotal)||0,discountAmount:Number(row.discount_amount)||0,taxAmount:Number(row.tax_amount)||0,totalAmount:Number(row.total_amount)||0,data:{invoiceNumber:row.invoice_number||"",invoiceDate:formatJalaliDate(row.invoice_date),invoiceDateISO:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",discountAmount:String(Number(row.discount_amount)||0),taxAmount:String(Number(row.tax_amount)||0),notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at}));
- drawInvoices();return true;
+ paymentRows.forEach(row=>{if(!paymentGroups.has(row.invoice_id))paymentGroups.set(row.invoice_id,[]);paymentGroups.get(row.invoice_id).push({id:row.id,type:row.payment_type,amount:Number(row.amount)||0,method:row.payment_method,paidAt:row.paid_at,reference:row.reference||"",note:row.note||"",reversalOf:row.reversal_of||""})});
+ cloudInvoices=rows.map(row=>{
+  const payments=paymentGroups.get(row.id)||[],reversedIds=new Set(payments.filter(p=>p.type==="reversal").map(p=>p.reversalOf));
+  const paidAmount=payments.reduce((sum,p)=>sum+(p.type==="receipt"?p.amount:-p.amount),0);
+  const totalAmount=Number(row.total_amount)||0,balance=Math.max(0,totalAmount-paidAmount);
+  return {id:row.id,status:row.status,subtotal:Number(row.subtotal)||0,discountAmount:Number(row.discount_amount)||0,taxAmount:Number(row.tax_amount)||0,totalAmount,paidAmount,balance,paymentStatus:balance<=0.005?"paid":paidAmount>0?"partial":"unpaid",payments:payments.map(p=>({...p,reversed:reversedIds.has(p.id)})),data:{invoiceNumber:row.invoice_number||"",invoiceDate:formatJalaliDate(row.invoice_date),invoiceDateISO:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",discountAmount:String(Number(row.discount_amount)||0),taxAmount:String(Number(row.tax_amount)||0),notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at};
+ });
+ drawInvoices();if(selectedPaymentInvoiceId)drawPaymentPanel();return true;
 }
 
 async function loadBusinessSettings(requestedUserId=currentUser?.id){
@@ -174,7 +177,59 @@ function preview(){
 function drawInvoices(){
  const host=$("savedInvoices");
  if(!cloudInvoices.length){host.innerHTML='<p class="helper">هنوز فاکتوری در فضای ابری ثبت نشده است.</p>';return}
- host.innerHTML=cloudInvoices.map(x=>'<div class="saved-invoice"><div class="saved-invoice-info"><strong>'+esc(x.data.invoiceNumber||"بدون شماره")+' — '+esc(x.data.customerName||"بدون نام مشتری")+'</strong><span>'+esc(x.data.invoiceDate||"بدون تاریخ")+' · '+fa(x.totalAmount)+' '+esc(x.data.currency||"تومان")+' · '+(x.status==="issued"?"صادرشده":esc(x.status||""))+'</span></div><div class="saved-invoice-actions"><button class="button button-light" data-open-invoice="'+esc(x.id)+'">مشاهده</button></div></div>').join("");
+ host.innerHTML=cloudInvoices.map(x=>{
+  const status=x.paymentStatus==="paid"?"تسویه‌شده":x.paymentStatus==="partial"?"پرداخت جزئی":"پرداخت‌نشده";
+  return '<div class="saved-invoice"><div class="saved-invoice-info"><strong>'+esc(x.data.invoiceNumber||"بدون شماره")+' — '+esc(x.data.customerName||"بدون نام مشتری")+'</strong><span>'+esc(x.data.invoiceDate||"بدون تاریخ")+' · '+fa(x.totalAmount)+' '+esc(x.data.currency||"تومان")+' · '+(x.status==="issued"?"صادرشده":esc(x.status||""))+'</span><span>وضعیت پرداخت: '+status+' · دریافتی: '+fa(x.paidAmount)+' · مانده: '+fa(x.balance)+' '+esc(x.data.currency||"تومان")+'</span></div><div class="saved-invoice-actions"><button class="button button-light" data-open-invoice="'+esc(x.id)+'">مشاهده</button><button class="button button-light" data-payment-invoice="'+esc(x.id)+'">'+(x.balance>0?"ثبت دریافت":"سوابق دریافت")+'</button></div></div>';
+ }).join("");
+}
+function paymentMethodLabel(method){return ({cash:"نقدی",card:"کارت‌خوان",bank_transfer:"واریز بانکی",other:"سایر"})[method]||"سایر"}
+function drawPaymentPanel(){
+ const panel=$("paymentPanel"),invoice=cloudInvoices.find(x=>x.id===selectedPaymentInvoiceId);
+ if(!panel||!invoice){if(panel)panel.hidden=true;return}
+ panel.hidden=false;$("paymentPanelTitle").textContent="دریافت‌های فاکتور "+(invoice.data.invoiceNumber||"");
+ $("paymentInvoiceSummary").textContent="مبلغ فاکتور: "+fa(invoice.totalAmount)+" · دریافتی: "+fa(invoice.paidAmount)+" · مانده: "+fa(invoice.balance)+" "+(invoice.data.currency||"تومان");
+ $("paymentAmount").max=String(invoice.balance);$("savePayment").disabled=invoice.balance<=0.005;
+ if(invoice.balance>0.005&&(!$("paymentAmount").value||Number($("paymentAmount").value)>invoice.balance))$("paymentAmount").value=invoice.balance.toFixed(2);
+ if(invoice.balance<=0.005)$("paymentAmount").value="";
+ const history=$("paymentHistory");
+ if(!invoice.payments.length){history.innerHTML='<p class="helper">هنوز دریافتی برای این فاکتور ثبت نشده است.</p>';return}
+ history.innerHTML=invoice.payments.map(p=>{
+  const reversal=p.type==="reversal",action=!reversal&&!p.reversed?'<button class="button button-danger" data-reverse-payment="'+esc(p.id)+'">برگشت دریافت</button>':"";
+  return '<div class="record-row"><div class="record-main"><strong>'+(reversal?"برگشت دریافت":"دریافت")+' · '+fa(p.amount)+' '+esc(invoice.data.currency||"تومان")+'</strong><span>'+paymentMethodLabel(p.method)+' · '+new Date(p.paidAt).toLocaleString("fa-IR")+(p.reference?" · پیگیری: "+esc(p.reference):"")+(p.note?" · "+esc(p.note):"")+'</span></div><div class="record-actions">'+action+'</div></div>';
+ }).join("");
+}
+function openPaymentPanel(invoiceId){
+ const invoice=cloudInvoices.find(x=>x.id===invoiceId);if(!invoice)return;
+ selectedPaymentInvoiceId=invoiceId;$("paymentAmount").value=invoice.balance>0?invoice.balance.toFixed(2):"";
+ $("paymentMethod").value="cash";$("paymentReference").value="";$("paymentNote").value="";$("paymentStatus").textContent="";
+ drawPaymentPanel();$("paymentPanel").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+async function savePayment(){
+ const requestedUserId=currentUser?.id,invoice=cloudInvoices.find(x=>x.id===selectedPaymentInvoiceId);if(!requestedUserId||!invoice)return;
+ const amount=Number($("paymentAmount").value),method=$("paymentMethod").value;
+ if(!Number.isFinite(amount)||amount<=0){$("paymentStatus").textContent="مبلغ دریافتی باید بیشتر از صفر باشد.";return}
+ if(amount>invoice.balance+0.005){$("paymentStatus").textContent="مبلغ دریافتی نمی‌تواند از مانده فاکتور بیشتر باشد.";return}
+ const btn=$("savePayment");btn.disabled=true;$("paymentStatus").textContent="در حال ثبت دریافت…";
+ try{
+  const {error}=await supabaseClient.from("invoice_payments").insert({user_id:requestedUserId,invoice_id:invoice.id,payment_type:"receipt",amount,payment_method:method,paid_at:new Date().toISOString(),reference:$("paymentReference").value.trim(),note:$("paymentNote").value.trim()});
+  if(error)throw error;if(currentUser?.id!==requestedUserId)return;
+  $("paymentAmount").value="";$("paymentReference").value="";$("paymentNote").value="";
+  await loadCloudInvoices(requestedUserId);if(currentUser?.id!==requestedUserId)return;
+  $("paymentStatus").textContent="دریافت با موفقیت ثبت شد.";
+ }catch(error){if(currentUser?.id===requestedUserId)$("paymentStatus").textContent="ثبت دریافت انجام نشد: "+cloudError(error)}
+ finally{if(currentUser?.id===requestedUserId)btn.disabled=false}
+}
+async function reversePayment(paymentId){
+ const requestedUserId=currentUser?.id,invoice=cloudInvoices.find(x=>x.id===selectedPaymentInvoiceId),payment=invoice?.payments.find(x=>x.id===paymentId);
+ if(!requestedUserId||!invoice||!payment||payment.type!=="receipt"||payment.reversed)return;
+ if(!confirm("این دریافت برگشت داده شود؟ سابقه اصلی حفظ خواهد شد."))return;
+ $("paymentStatus").textContent="در حال ثبت برگشت دریافت…";
+ try{
+  const {error}=await supabaseClient.from("invoice_payments").insert({user_id:requestedUserId,invoice_id:invoice.id,payment_type:"reversal",amount:payment.amount,payment_method:payment.method,paid_at:new Date().toISOString(),reference:payment.reference,note:"برگشت دریافت"+(payment.note?": "+payment.note:""),reversal_of:payment.id});
+  if(error)throw error;if(currentUser?.id!==requestedUserId)return;
+  await loadCloudInvoices(requestedUserId);if(currentUser?.id!==requestedUserId)return;
+  $("paymentStatus").textContent="برگشت دریافت ثبت شد؛ سابقه اصلی حذف یا ویرایش نشد.";
+ }catch(error){if(currentUser?.id===requestedUserId)$("paymentStatus").textContent="برگشت دریافت انجام نشد: "+cloudError(error)}
 }
 
 function movement(kind,productId,quantity,description,reference){
@@ -318,12 +373,13 @@ async function backupExport(){
    }
    return result;
   }
-  const [productRows,customerRows,movementRows,invoiceRows,itemRows,settingsRows,profileRows]=await Promise.all([
+  const [productRows,customerRows,movementRows,invoiceRows,itemRows,paymentRows,settingsRows,profileRows]=await Promise.all([
    fetchAll("products","id,name,sku,unit,sale_price,stock_on_hand,min_stock,note,is_active"),
    fetchAll("customers","id,name,phone,email,address,note,is_active"),
    fetchAll("inventory_movements","id,product_id,movement_type,quantity_delta,description,reference,occurred_at"),
    fetchAll("invoices","id,invoice_number,invoice_date,status,currency,business_name_snapshot,business_phone_snapshot,business_address_snapshot,customer_name_snapshot,customer_phone_snapshot,notes,subtotal,discount_amount,tax_amount,total_amount,created_at"),
    fetchAll("invoice_items","id,invoice_id,product_id,description,quantity,unit,unit_price,sort_order"),
+   fetchAll("invoice_payments","id,invoice_id,payment_type,amount,payment_method,paid_at,reference,note,reversal_of,created_at"),
    fetchAll("business_settings","user_id,business_name,phone,address,default_currency,invoice_prefix,next_invoice_number,created_at","user_id"),
    fetchAll("profiles","id,full_name,created_at")
   ]);
@@ -337,7 +393,7 @@ async function backupExport(){
    const p=allProducts.find(x=>x.id===m.product_id);
    return {id:m.id,kind:m.movement_type==="purchase"||m.movement_type==="opening"?"in":m.movement_type==="sale"?"sale":"return",productId:m.product_id,productName:p?.name||"کالای حذف‌شده",quantity:Math.abs(Number(m.quantity_delta)||0),description:m.description||"",reference:m.reference||"",date:m.occurred_at};
   });
-  const payload={app:"ForushNameh",formatVersion:4,createdAt:new Date().toISOString(),profile:profileRows[0]||null,businessSettings:settingsRows[0]||null,invoices:allInvoices,products:allProducts,customers:allCustomers,movements:allMovements};
+  const payload={app:"ForushNameh",formatVersion:5,createdAt:new Date().toISOString(),profile:profileRows[0]||null,businessSettings:settingsRows[0]||null,invoices:allInvoices,invoiceItems:itemRows,invoicePayments:paymentRows,products:allProducts,customers:allCustomers,movements:allMovements};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob),a=document.createElement("a");
   a.href=url;a.download=`ForushNameh-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();
@@ -496,7 +552,9 @@ function init(){
  $("saveBusinessSettings").addEventListener("click",saveBusinessSettings);
  $("reportPeriod").addEventListener("change",drawReports);$("reportCurrency").addEventListener("change",drawReports);
  $("exportReportPdf").addEventListener("click",exportReportPdf);$("exportReportCsv").addEventListener("click",exportReportCsv);
- $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]");if(o)loadInvoice(o.dataset.openInvoice)});
+ $("savedInvoices").addEventListener("click",e=>{const o=e.target.closest("[data-open-invoice]"),p=e.target.closest("[data-payment-invoice]");if(o){loadInvoice(o.dataset.openInvoice);return}if(p)openPaymentPanel(p.dataset.paymentInvoice)});
+ $("savePayment").addEventListener("click",savePayment);$("cancelPayment").addEventListener("click",()=>{selectedPaymentInvoiceId=null;$("paymentPanel").hidden=true});
+ $("paymentHistory").addEventListener("click",e=>{const b=e.target.closest("[data-reverse-payment]");if(b)reversePayment(b.dataset.reversePayment)});
  $("saveProduct").addEventListener("click",saveProduct);$("cancelProductEdit").addEventListener("click",clearProductForm);$("productSearch").addEventListener("input",drawProductList);
  $("productsList").addEventListener("click",e=>{const edit=e.target.closest("[data-edit-product]"),del=e.target.closest("[data-delete-product]");if(edit){editProduct(edit.dataset.editProduct);return}if(del&&confirm("این کالا غیرفعال شود؟ سوابق انبار و فاکتورهای مرتبط حفظ می‌شوند.")){(async()=>{const requestedUserId=currentUser?.id;if(!requestedUserId)return;try{const {error}=await supabaseClient.from("products").update({is_active:false}).eq("id",del.dataset.deleteProduct);if(currentUser?.id!==requestedUserId)return;if(error)throw error;await loadCloudData();if(currentUser?.id===requestedUserId)$("productStatus").textContent="کالا غیرفعال شد؛ سوابق آن حفظ شده است."}catch(error){if(currentUser?.id===requestedUserId)$("productStatus").textContent="غیرفعال‌سازی کالا انجام نشد: "+cloudError(error)}})()}});
  $("saveCustomer").addEventListener("click",saveCustomer);$("cancelCustomerEdit").addEventListener("click",clearCustomerForm);$("customerSearch").addEventListener("input",drawCustomerList);
