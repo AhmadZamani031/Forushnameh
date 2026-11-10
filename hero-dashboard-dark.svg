@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 560" fill="none">
+<defs>
+ <linearGradient id="bg" x1="72" y1="50" x2="635" y2="520" gradientUnits="userSpaceOnUse"><stop stop-color="#172a43"/><stop offset="1" stop-color="#1d3549"/></linearGradient>
+ <linearGradient id="brand" x1="115" y1="96" x2="610" y2="454" gradientUnits="userSpaceOnUse"><stop stop-color="#245C9A"/><stop offset="1" stop-color="#159C83"/></linearGradient>
+ <filter id="shadow" x="40" y="20" width="650" height="520" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="16"/></filter>
+</defs>
+<circle cx="350" cy="280" r="246" fill="url(#bg)"/>
+<circle cx="350" cy="280" r="208" stroke="#405975" stroke-dasharray="5 9"/>
+<ellipse cx="350" cy="480" rx="235" ry="28" fill="#315F83" opacity=".12" filter="url(#shadow)"/>
+<g transform="rotate(-7 300 260)">
+ <rect x="96" y="80" width="350" height="390" rx="24" fill="#1b2d45" stroke="#405771" stroke-width="2"/>
+ <rect x="96" y="80" width="350" height="74" rx="24" fill="#22364f"/>
+ <path d="M96 130h350" stroke="#3a506b" stroke-width="2"/>
+ <rect x="125" y="106" width="32" height="32" rx="10" fill="url(#brand)"/>
+ <path d="m133 122 7 7 13-15" stroke="#1b2d45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+ <rect x="171" y="108" width="112" height="9" rx="4.5" fill="#24476D"/>
+ <rect x="171" y="125" width="76" height="6" rx="3" fill="#91a7c1"/>
+ <rect x="126" y="181" width="290" height="82" rx="15" fill="#243a55"/>
+ <text x="148" y="207" font-family="Arial,sans-serif" font-size="12" fill="#b3c3d7">مبلغ فروش</text>
+ <text x="148" y="240" font-family="Arial,sans-serif" font-size="27" font-weight="700" fill="#e1ecfb">۱۲,۸۵۰,۰۰۰</text>
+ <text x="358" y="240" font-family="Arial,sans-serif" font-size="12" fill="#159C83">تومان</text>
+ <rect x="126" y="282" width="132" height="78" rx="12" fill="#20354e" stroke="#3b526d"/>
+ <rect x="272" y="282" width="144" height="78" rx="12" fill="#20354e" stroke="#3b526d"/>
+ <text x="145" y="307" font-family="Arial,sans-serif" font-size="11" fill="#a8bad0">فاکتورهای صادرشده</text>
+ <text x="145" y="340" font-family="Arial,sans-serif" font-size="25" font-weight="700" fill="#e1ecfb">۲۴</text>
+ <text x="292" y="307" font-family="Arial,sans-serif" font-size="11" fill="#a8bad0">مشتریان</text>
+ <text x="292" y="340" font-family="Arial,sans-serif" font-size="25" font-weight="700" fill="#e1ecfb">۱۸۶</text>
+ <rect x="126" y="380" width="290" height="58" rx="11" fill="#20354e" stroke="#3b526d"/>
+ <path d="M145 416h22m8-12h22m8 5h22m8-19h22m8 14h22m8-22h22m8 9h22m8-18h22" stroke="url(#brand)" stroke-width="7" stroke-linecap="round"/>
+</g>
+<g transform="rotate(8 510 205)">
+ <rect x="420" y="95" width="205" height="265" rx="20" fill="#1b2d45" stroke="#405771" stroke-width="2"/>
+ <rect x="445" y="121" width="76" height="9" rx="4.5" fill="#e0ebfa"/>
+ <rect x="445" y="141" width="150" height="5" rx="2.5" fill="#435b77"/>
+ <rect x="445" y="170" width="155" height="40" rx="8" fill="#F2F7FB"/>
+ <path d="M458 194h22m9-10h22m9 6h22m9-12h22m9 9h18" stroke="#1D9B83" stroke-width="5" stroke-linecap="round"/>
+ <rect x="445" y="228" width="155" height="1" fill="#3b526d"/>
+ <rect x="445" y="246" width="90" height="6" rx="3" fill="#A9B9C9"/>
+ <rect x="545" y="246" width="55" height="6" rx="3" fill="#526984"/>
+ <rect x="445" y="266" width="90" height="6" rx="3" fill="#A9B9C9"/>
+ <rect x="545" y="266" width="55" height="6" rx="3" fill="#526984"/>
+ <rect x="445" y="286" width="90" height="6" rx="3" fill="#A9B9C9"/>
+ <rect x="545" y="286" width="55" height="6" rx="3" fill="#526984"/>
+ <rect x="445" y="316" width="155" height="24" rx="7" fill="url(#brand)"/>
+ <text x="522" y="332" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#1b2d45">فاکتور فروش</text>
+</g>
+<circle cx="111" cy="354" r="23" fill="#1b2d45" stroke="#405a76" stroke-width="2"/>
+<path d="M101 354h20m-10-10v20" stroke="#1C9A82" stroke-width="3" stroke-linecap="round"/>
+<circle cx="610" cy="410" r="29" fill="#1b2d45" stroke="#405a76" stroke-width="2"/>
+<path d="m597 410 9 9 18-20" stroke="#1C9A82" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
