@@ -41,7 +41,7 @@
 | `supabase/migrations/` | تاریخچه تغییرات پایگاه داده |
 | `supabase/functions/delete-account/` | حذف امن حساب از سمت سرور |
 | `logo-forushnameh.svg`, `logo-forushnameh-dark.svg` | لوگوی روشن و تاریک |
-| `favicon.svg`, `app-icon.svg` | نماد مرورگر و آیکون نصب |
+| `logo-forushnameh.svg`, `logo-forushnameh-dark.svg` | لوگوی اصلی سایت و آیکون‌های برنامه |
 
 ## داده‌ها و امنیت
 داده‌ها در PostgreSQL نگهداری می‌شوند. سیاست‌های RLS و توابع دیتابیس مالکیت و اعتبارسنجی عملیات حساس را کنترل می‌کنند. دریافت‌ها و برگشت‌ها به‌صورت دفتر ثبت append-only نگهداری می‌شوند.
