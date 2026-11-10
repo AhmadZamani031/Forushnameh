@@ -91,7 +91,7 @@ async function loadCloudInvoices(requestedUserId=currentUser?.id){
  }
  const grouped=new Map();
  itemRows.forEach(row=>{if(!grouped.has(row.invoice_id))grouped.set(row.invoice_id,[]);grouped.get(row.invoice_id).push({id:row.id,name:row.description||"",quantity:Number(row.quantity)||0,price:Number(row.unit_price)||0,productId:row.product_id||"",unit:row.unit||"عدد"})});
- cloudInvoices=rows.map(row=>({id:row.id,status:row.status,totalAmount:Number(row.total_amount)||0,data:{invoiceNumber:row.invoice_number||"",invoiceDate:formatJalaliDate(row.invoice_date),invoiceDateISO:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",discountAmount:String(Number(row.discount_amount)||0),taxAmount:String(Number(row.tax_amount)||0),notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at}));
+ cloudInvoices=rows.map(row=>({id:row.id,status:row.status,subtotal:Number(row.subtotal)||0,discountAmount:Number(row.discount_amount)||0,taxAmount:Number(row.tax_amount)||0,totalAmount:Number(row.total_amount)||0,data:{invoiceNumber:row.invoice_number||"",invoiceDate:formatJalaliDate(row.invoice_date),invoiceDateISO:row.invoice_date||"",currency:row.currency||"تومان",storeName:row.business_name_snapshot||"",storePhone:row.business_phone_snapshot||"",storeAddress:row.business_address_snapshot||"",customerName:row.customer_name_snapshot||"",customerPhone:row.customer_phone_snapshot||"",discountAmount:String(Number(row.discount_amount)||0),taxAmount:String(Number(row.tax_amount)||0),notes:row.notes||""},items:grouped.get(row.id)||[],createdAt:row.created_at}));
  drawInvoices();return true;
 }
 
@@ -432,9 +432,9 @@ function exportReportCsv(){
    x.data?.invoiceDate||"",
    x.data?.customerName||"",
    currency,
-   (x.items||[]).reduce((sum,item)=>sum+(Number(item.quantity)||0)*(Number(item.price)||0),0),
-   x.data?.discountAmount??"",
-   x.data?.taxAmount??"",
+   x.subtotal??"",
+   x.discountAmount??"",
+   x.taxAmount??"",
    x.totalAmount??"",
    "صادرشده"
   ].map(reportCsvCell).join(","))
