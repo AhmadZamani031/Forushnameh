@@ -777,7 +777,7 @@ function authErrorMessage(error){
 }
 function setupPwa(){
  if(!("serviceWorker" in navigator))return;
- window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=14",{updateViaCache:"none"}).catch(error=>console.warn("PWA service worker registration failed",error)));
+  // Service workers are temporarily disabled while online startup is stabilized.
  let installPrompt=null;
  const button=$("installAppButton"),card=$("pwaInstallCard");
  if(!button||!card)return;
