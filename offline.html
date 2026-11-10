@@ -43,7 +43,7 @@ button:focus-visible{outline:3px solid #83b6f5;outline-offset:3px}
  if(refresh)refresh.disabled=true;
  try{
   if("serviceWorker" in navigator){
-   const registration=await navigator.serviceWorker.register("./service-worker.js?retire=20261110",{scope:"./",updateViaCache:"none"});
+   const registration=await navigator.serviceWorker.register("./service-worker-retire.js",{scope:"./",updateViaCache:"none"});
    await registration.update().catch(()=>{});
    const active=registration.installing||registration.waiting||registration.active;
    if(active&&active.state!=="activated"){
@@ -58,7 +58,7 @@ button:focus-visible{outline:3px solid #83b6f5;outline-offset:3px}
    }
    await navigator.serviceWorker.ready;
    await new Promise(resolve=>{
-    if(navigator.serviceWorker.controller?.scriptURL.includes("retire=20261110")){resolve();return}
+    if(navigator.serviceWorker.controller?.scriptURL.includes("service-worker-retire.js")){resolve();return}
     const done=()=>{if(navigator.serviceWorker.controller?.scriptURL.includes("retire=20261110")){navigator.serviceWorker.removeEventListener("controllerchange",done);resolve()}};
     navigator.serviceWorker.addEventListener("controllerchange",done);
     setTimeout(()=>{navigator.serviceWorker.removeEventListener("controllerchange",done);resolve()},5000);
