@@ -685,6 +685,24 @@ function authErrorMessage(error){
  if(m.includes("failed to fetch"))return "ارتباط با سرور برقرار نشد؛ اینترنت و تنظیمات اتصال را بررسی کن.";
  return error?.message||"خطایی رخ داد. دوباره تلاش کن.";
 }
+function setupPwa(){
+ if(!("serviceWorker" in navigator))return;
+ window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(error=>console.warn("PWA service worker registration failed",error)));
+ let installPrompt=null;
+ const button=$("installAppButton");
+ if(!button)return;
+ window.addEventListener("beforeinstallprompt",event=>{
+  event.preventDefault();installPrompt=event;button.hidden=false;
+ });
+ button.addEventListener("click",async()=>{
+  if(!installPrompt)return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt=null;button.hidden=true;
+ });
+ window.addEventListener("appinstalled",()=>{installPrompt=null;button.hidden=true});
+}
+setupPwa();
 const THEME_KEY="forushnameh.theme";
 function applyTheme(mode){
  const selected=["system","light","dark"].includes(mode)?mode:"system";
