@@ -685,6 +685,31 @@ function authErrorMessage(error){
  if(m.includes("failed to fetch"))return "ارتباط با سرور برقرار نشد؛ اینترنت و تنظیمات اتصال را بررسی کن.";
  return error?.message||"خطایی رخ داد. دوباره تلاش کن.";
 }
+const THEME_KEY="forushnameh.theme";
+function applyTheme(mode){
+ const selected=["system","light","dark"].includes(mode)?mode:"system";
+ const prefersDark=window.matchMedia?.("(prefers-color-scheme: dark)").matches||false;
+ const effective=selected==="system"?(prefersDark?"dark":"light"):selected;
+ document.documentElement.dataset.theme=effective;
+ const picker=$("themeMode");if(picker&&picker.value!==selected)picker.value=selected;
+ const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=effective==="dark"?"#101a2b":"#103b86";
+}
+function setupTheme(){
+ let mode="system";try{mode=localStorage.getItem(THEME_KEY)||"system"}catch(error){}
+ applyTheme(mode);
+ const picker=$("themeMode");
+ if(picker){
+  picker.value=mode;
+  picker.addEventListener("change",()=>{
+   const next=picker.value;
+   try{localStorage.setItem(THEME_KEY,next)}catch(error){}
+   applyTheme(next);
+  });
+ }
+ const media=window.matchMedia?.("(prefers-color-scheme: dark)");
+ media?.addEventListener?.("change",()=>{let current="system";try{current=localStorage.getItem(THEME_KEY)||"system"}catch(error){}if(current==="system")applyTheme("system")});
+}
+setupTheme();
 async function startAuth(){
  document.querySelector("main.page").hidden=true;
  if(!window.supabase?.createClient){showSignedOut();showAuthMessage("کتابخانهٔ اتصال بارگذاری نشد؛ اتصال اینترنت را بررسی و صفحه را تازه‌سازی کن.",true);return}
