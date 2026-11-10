@@ -335,7 +335,7 @@ async function backupExport(){
    return {id:m.id,kind:m.movement_type==="purchase"||m.movement_type==="opening"?"in":m.movement_type==="sale"?"sale":"return",productId:m.product_id,productName:p?.name||"کالای حذف‌شده",quantity:Math.abs(Number(m.quantity_delta)||0),description:m.description||"",reference:m.reference||"",date:m.occurred_at};
   });
   const payload={app:"ForushNameh",formatVersion:4,createdAt:new Date().toISOString(),profile:profileRows[0]||null,businessSettings:settingsRows[0]||null,invoices:allInvoices,products:allProducts,customers:allCustomers,movements:allMovements};
-  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
   const url=URL.createObjectURL(blob),a=document.createElement("a");
   a.href=url;a.download=`ForushNameh-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -418,7 +418,7 @@ function drawReports(){
 
 function reportCsvCell(value){
  const text=String(value??"");
- const safe=/^[=+@\\-\\t\\r]/.test(text)?"'"+text:text;
+ const safe=/^[=+@\- \t\r]/.test(text)?"'"+text:text;
  return '"'+safe.replace(/"/g,'""')+'"';
 }
 function exportReportCsv(){
