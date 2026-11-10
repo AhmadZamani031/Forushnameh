@@ -38,10 +38,10 @@ Deno.serve(async (req: Request) => {
     }
 
     const url = Deno.env.get("SUPABASE_URL") || "";
-    const publishableMap = Deno.env.get("SUPABASE_PUBLISHABLE_KEYS");
-    const publishableKey = publishableMap ? JSON.parse(publishableMap).default : Deno.env.get("SUPABASE_ANON_KEY") || "";
-    const secretMap = Deno.env.get("SUPABASE_SECRET_KEYS");
-    const secretKey = secretMap ? JSON.parse(secretMap).default : Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    // Legacy JWT-based keys remain supported in the current Supabase runtime.
+    // They are used only inside this server-side function, never in the browser.
+    const publishableKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+    const secretKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     if (!url || !publishableKey || !secretKey) {
       console.error("Required Supabase function secrets are unavailable");
       return json({ error: "Account deletion service is not configured" }, 503);
