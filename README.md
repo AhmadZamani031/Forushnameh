@@ -46,10 +46,11 @@
 | `service-worker.js` | کش پوسته PWA و رفتار آفلاین |
 | `manifest.webmanifest` | مشخصات نصب PWA |
 | `supabase/migrations/` | تاریخچه تغییرات پایگاه داده |
+| `supabase/functions/delete-account/` | حذف امن حساب از سمت سرور |
 | `logo-forushnameh.svg`, `logo-forushnameh-dark.svg` | لوگوی روشن و تاریک |
 | `hero-dashboard.svg`, `hero-dashboard-dark.svg` | تصویر معرفی روشن و تاریک |
 | `favicon.svg`, `app-icon.svg` | نماد مرورگر و آیکون نصب |
-| `CHANGELOG-v11.md`، `CHANGELOG-v12.md` و `CHANGELOG-v13.md` | تغییرات نسخه ۱۱ و اصلاحات تکمیلی |
+| `CHANGELOG-v11.md`، `CHANGELOG-v12.md`، `CHANGELOG-v13.md` و `CHANGELOG-v14.md` | تغییرات نسخه ۱۱ و اصلاحات تکمیلی |
 
 ## داده‌ها و امنیت
 
