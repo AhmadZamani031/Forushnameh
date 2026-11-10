@@ -1,4 +1,4 @@
-const CACHE_NAME="forushnameh-shell-v5";
+const CACHE_NAME="forushnameh-shell-v6";
 const APP_SHELL=[
  "./",
  "./index.html",
@@ -7,7 +7,7 @@ const APP_SHELL=[
  "./faq.html",
  "./privacy.html",
  "./terms.html",
- "./styles.css?v=17",
+ "./styles.css?v=19",
  "./app.js?v=18",
  "./site.js",
  "./favicon.svg",
@@ -15,6 +15,7 @@ const APP_SHELL=[
  "./logo-forushnameh.svg",
  "./logo-forushnameh-dark.svg",
  "./hero-dashboard.svg",
+ "./hero-dashboard-dark.svg",
  "./manifest.webmanifest",
  "./offline.html"
 ];
