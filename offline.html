@@ -33,26 +33,50 @@ button{border:0;border-radius:10px;background:#103b86;color:#fff;padding:12px 22
 button:focus-visible{outline:3px solid #83b6f5;outline-offset:3px}
 </style>
 <script>
-/* Remove the stale offline worker/cache once, then request the real app document. */
+/* Replace the old controlling worker with a no-fetch worker, then reload the app. */
 (async function(){
  const params=new URLSearchParams(location.search);
- if(params.has("sw-recovery"))return;
+ if(params.has("sw-retired"))return;
+ const status=document.querySelector(".card p");
+ const refresh=document.querySelector(".actions button");
+ if(status)status.textContent="در حال بازیابی برنامه؛ لطفاً چند لحظه صبر کنید…";
+ if(refresh)refresh.disabled=true;
  try{
   if("serviceWorker" in navigator){
-   const registrations=await navigator.serviceWorker.getRegistrations();
-   await Promise.all(registrations.filter(reg=>new URL(reg.scope).pathname.toLowerCase().includes("/forushnameh/")).map(reg=>reg.unregister()));
+   const registration=await navigator.serviceWorker.register("./service-worker.js?retire=20261110",{scope:"./",updateViaCache:"none"});
+   await registration.update().catch(()=>{});
+   const active=registration.installing||registration.waiting||registration.active;
+   if(active&&active.state!=="activated"){
+    await new Promise((resolve,reject)=>{
+     const worker=registration.installing||registration.waiting||registration.active;
+     if(!worker){resolve();return}
+     const done=()=>{if(worker.state==="activated"){worker.removeEventListener("statechange",done);resolve()}else if(worker.state==="redundant"){worker.removeEventListener("statechange",done);reject(new Error("Worker update failed"))}};
+     worker.addEventListener("statechange",done);
+     done();
+     setTimeout(()=>reject(new Error("Worker update timed out")),12000);
+    });
+   }
+   await navigator.serviceWorker.ready;
+   await new Promise(resolve=>{
+    if(navigator.serviceWorker.controller?.scriptURL.includes("retire=20261110")){resolve();return}
+    const done=()=>{if(navigator.serviceWorker.controller?.scriptURL.includes("retire=20261110")){navigator.serviceWorker.removeEventListener("controllerchange",done);resolve()}};
+    navigator.serviceWorker.addEventListener("controllerchange",done);
+    setTimeout(()=>{navigator.serviceWorker.removeEventListener("controllerchange",done);resolve()},5000);
+   });
   }
- }catch(_){}
- try{
   if("caches" in window){
    const keys=await caches.keys();
    await Promise.all(keys.filter(key=>key.toLowerCase().includes("forushnameh")).map(key=>caches.delete(key)));
   }
- }catch(_){}
- const target=new URL("./index.html",location.href);
- target.searchParams.set("sw-recovery","1");
- target.searchParams.set("t",String(Date.now()));
- location.replace(target.href);
+  const target=new URL("./index.html",location.href);
+  target.searchParams.set("sw-retired","1");
+  target.searchParams.set("t",String(Date.now()));
+  location.replace(target.href);
+ }catch(error){
+  if(status)status.textContent="بازیابی خودکار انجام نشد. لطفاً دکمه تلاش دوباره را بزنید یا صفحه را در زبانه جدید باز کنید.";
+  if(refresh)refresh.disabled=false;
+  console.error("Forushnameh worker recovery failed",error);
+ }
 })();
 </script>
 
