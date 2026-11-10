@@ -398,7 +398,7 @@ async function backupExport(){
   const url=URL.createObjectURL(blob),a=document.createElement("a");
   a.href=url;a.download=`ForushNameh-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
-  $("backupStatus").textContent="فایل پشتیبان از همهٔ کالاها، مشتریان، فاکتورها و گردش‌های انبار ساخته شد.";
+  $("backupStatus").textContent="فایل پشتیبان از کالاها، مشتریان، فاکتورها، دریافت‌ها، برگشت‌ها و گردش‌های انبار ساخته شد.";
  }catch(error){
   if(currentUser?.id===requestedUserId)$("backupStatus").textContent="تهیهٔ پشتیبان کامل انجام نشد: "+cloudError(error);
  }finally{
