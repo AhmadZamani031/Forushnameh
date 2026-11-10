@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authorization = req.headers.get("Authorization") || "";
-    const accessToken = authorization.replace(/^Bearer\\s+/i, "").trim();
+    const accessToken = authorization.replace(/^Bearer\s+/i, "").trim();
     if (!accessToken || accessToken === authorization) {
       return json({ error: "Authentication required" }, 401);
     }
