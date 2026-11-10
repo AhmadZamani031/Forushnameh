@@ -432,9 +432,9 @@ function exportReportCsv(){
    x.data?.invoiceDate||"",
    x.data?.customerName||"",
    currency,
-   x.subtotal??"",
-   x.discountAmount??"",
-   x.taxAmount??"",
+   (x.items||[]).reduce((sum,item)=>sum+(Number(item.quantity)||0)*(Number(item.price)||0),0),
+   x.data?.discountAmount??"",
+   x.data?.taxAmount??"",
    x.totalAmount??"",
    "صادرشده"
   ].map(reportCsvCell).join(","))
