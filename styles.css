@@ -284,3 +284,7 @@ input:focus,textarea:focus,select:focus{border-color:#6c9be0;box-shadow:0 0 0 3p
  .legal-summary{padding:17px}
 }
 @media(prefers-reduced-motion:reduce){.public-menu-toggle span{transition:none}}
+
+.report-export-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin:0 0 18px}
+.report-export-actions .button{min-height:40px}
+@media(max-width:600px){.report-export-actions{display:grid;grid-template-columns:1fr 1fr}.report-export-actions .button{font-size:11px;padding:9px 8px}}
