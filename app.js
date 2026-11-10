@@ -263,14 +263,17 @@ async function saveProduct(){
  const payload={name,sku:code||null,unit:$("productUnit").value,sale_price:num($("productPrice").value),min_stock:num($("productMinStock").value),note:$("productNote").value.trim(),is_active:true};
  const btn=$("saveProduct");btn.disabled=true;$("productStatus").textContent="در حال ذخیره کالا در فضای ابری…";
  try{
-  let saved;
-  if(editingProductId){const {data,error}=await supabaseClient.from("products").update(payload).eq("id",editingProductId).select("id").single();if(error)throw error;saved=data}
-  else{const {data,error}=await supabaseClient.from("products").insert({...payload,user_id:requestedUserId}).select("id").single();if(error)throw error;saved=data}
-  let openingError=null;
-  if(!editingProductId&&initialStock>0){const {error}=await supabaseClient.rpc("forushnameh_record_stock_movement",{p_product_id:saved.id,p_movement_type:"opening",p_quantity_delta:initialStock,p_description:"موجودی اولیه",p_reference:"",p_occurred_at:new Date().toISOString()});openingError=error}
+  if(editingProductId){
+   const {error}=await supabaseClient.from("products").update(payload).eq("id",editingProductId).select("id").single();
+   if(error)throw error;
+  }else{
+   const {data,error}=await supabaseClient.rpc("forushnameh_create_product",{p_product:payload,p_initial_stock:initialStock});
+   if(error)throw error;
+   if(!data?.product_id)throw new Error("پاسخ ثبت کالا از سرور کامل نیست.");
+  }
   if(currentUser?.id!==requestedUserId)return;
   clearProductForm();await loadCloudData();if(currentUser?.id!==requestedUserId)return;
-  $("productStatus").textContent=openingError?"کالا ذخیره شد، اما ثبت موجودی اولیه انجام نشد: "+cloudError(openingError):"کالا با موفقیت در پایگاه داده ابری ذخیره شد.";
+  $("productStatus").textContent="کالا"+(initialStock>0&&!editingProductId?" و موجودی اولیه":"")+" با موفقیت و به‌صورت یکپارچه در پایگاه داده ثبت شد.";
  }catch(error){if(currentUser?.id===requestedUserId)$("productStatus").textContent="ذخیره کالا انجام نشد: "+cloudError(error)}finally{if(currentUser?.id===requestedUserId)btn.disabled=false}
 }
 function editProduct(id){if(window.showForushnamehPage)window.showForushnamehPage("products");const p=productById(id);if(!p)return;editingProductId=id;$("productStock").disabled=true;$("productName").value=p.name;$("productCode").value=p.code;$("productUnit").value=p.unit;$("productPrice").value=p.price;$("productStock").value=p.stock;$("productMinStock").value=p.minStock;$("productNote").value=p.note||"";$("saveProduct").textContent="ذخیرهٔ تغییرات";$("cancelProductEdit").hidden=false}
