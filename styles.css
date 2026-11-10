@@ -309,3 +309,7 @@ input:focus,textarea:focus,select:focus{border-color:#6c9be0;box-shadow:0 0 0 3p
  #invoicePreview { position:absolute !important; inset:0 auto auto 0 !important; width:100% !important; max-width:none !important; margin:0 !important; box-shadow:none !important; border:0 !important; background:#fff !important; color:#111 !important; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
  @page { size:A4 portrait; margin:10mm; }
 }
+
+/* Backup and restore actions */
+.data-tools .saved-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+@media(max-width:520px){.data-tools .saved-actions .button{width:100%}}
