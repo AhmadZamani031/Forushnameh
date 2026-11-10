@@ -705,27 +705,26 @@ function setupPwa(){
 setupPwa();
 const THEME_KEY="forushnameh.theme";
 function applyTheme(mode){
- const selected=["system","light","dark"].includes(mode)?mode:"system";
- const prefersDark=window.matchMedia?.("(prefers-color-scheme: dark)").matches||false;
- const effective=selected==="system"?(prefersDark?"dark":"light"):selected;
+ const effective=mode==="dark"?"dark":"light";
  document.documentElement.dataset.theme=effective;
- const picker=$("themeMode");if(picker&&picker.value!==selected)picker.value=selected;
- const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=effective==="dark"?"#101a2b":"#103b86";
+ const button=document.querySelector("[data-theme-toggle]");
+ if(button){
+  button.setAttribute("aria-pressed",String(effective==="dark"));
+  button.setAttribute("aria-label",effective==="dark"?"فعال‌سازی تم روشن":"فعال‌سازی تم تاریک");
+  button.title=effective==="dark"?"تغییر به تم روشن":"تغییر به تم تاریک";
+ }
+ const meta=document.querySelector('meta[name="theme-color"]');
+ if(meta)meta.content=effective==="dark"?"#101a2b":"#103b86";
 }
 function setupTheme(){
- let mode="system";try{mode=localStorage.getItem(THEME_KEY)||"system"}catch(error){}
+ let mode="light";
+ try{mode=localStorage.getItem(THEME_KEY)==="dark"?"dark":"light";localStorage.setItem(THEME_KEY,mode)}catch(error){}
  applyTheme(mode);
- const picker=$("themeMode");
- if(picker){
-  picker.value=mode;
-  picker.addEventListener("change",()=>{
-   const next=picker.value;
-   try{localStorage.setItem(THEME_KEY,next)}catch(error){}
-   applyTheme(next);
-  });
- }
- const media=window.matchMedia?.("(prefers-color-scheme: dark)");
- media?.addEventListener?.("change",()=>{let current="system";try{current=localStorage.getItem(THEME_KEY)||"system"}catch(error){}if(current==="system")applyTheme("system")});
+ document.querySelectorAll("[data-theme-toggle]").forEach(button=>button.addEventListener("click",()=>{
+  const next=document.documentElement.dataset.theme==="dark"?"light":"dark";
+  try{localStorage.setItem(THEME_KEY,next)}catch(error){}
+  applyTheme(next);
+ }));
 }
 setupTheme();
 async function startAuth(){
