@@ -756,10 +756,10 @@ async function handleAuthSubmit(event){
   if(authMode==="updatepassword"){
    const {data,error}=await supabaseClient.auth.updateUser({password});if(error)throw error;showAuthenticatedApp(data.user);showAuthMessage("رمز عبور جدید ذخیره شد.");
   }else if(authMode==="signup"){
-   const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{full_name:name},emailRedirectTo:"https://ahmadzamani031.github.io/Forushnameh/"}});if(error)throw error;
+   const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{full_name:name},emailRedirectTo:"${window.location.origin}/"}});if(error)throw error;
    if(data.session){showAuthenticatedApp(data.user);showAuthMessage("حساب ساخته شد و وارد شدی.")}else{showAuthMessage("حساب ساخته شد. ایمیل خود را باز کن و پیوند تأیید را بزن؛ سپس به همین سایت برگرد و وارد شو.")}
   }else if(authMode==="reset"){
-   const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:"https://ahmadzamani031.github.io/Forushnameh/"});if(error)throw error;showAuthMessage("اگر حسابی با این ایمیل وجود داشته باشد، پیوند بازیابی برایت ارسال می‌شود.");
+   const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:"${window.location.origin}/"});if(error)throw error;showAuthMessage("اگر حسابی با این ایمیل وجود داشته باشد، پیوند بازیابی برایت ارسال می‌شود.");
   }else{
    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});if(error)throw error;showAuthenticatedApp(data.user);showAuthMessage("با موفقیت وارد شدی.");
   }
