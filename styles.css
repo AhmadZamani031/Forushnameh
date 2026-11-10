@@ -471,3 +471,110 @@ html[data-theme="dark"] .invoice label,html[data-theme="dark"] .invoice-footer{c
 html[data-theme="dark"] .invoice h1,html[data-theme="dark"] .invoice h3,
 html[data-theme="dark"] .invoice strong,html[data-theme="dark"] .invoice b{color:#25342d}
 html[data-theme="dark"] .invoice .invoice-top h2,html[data-theme="dark"] .invoice .grand-total{color:#174b91!important}
+
+/* v12: Complete dark palette for the public landing and information pages.
+   The public pages are wrapped in .public-site; they are not body.public-site. */
+html[data-theme="dark"] .public-site{
+  --public-bg:#101a2b;--public-panel:#19283e;--public-panel-soft:#22344d;
+  --public-border:#354963;--public-text:#e7eef9;--public-muted:#adbbce;
+  background:var(--public-bg)!important;color:var(--public-text)!important;
+}
+html[data-theme="dark"] .public-site .public-header{
+  background:#18263b;border-bottom:1px solid #354963;
+}
+html[data-theme="dark"] .public-site .public-nav a,
+html[data-theme="dark"] .public-site .public-footer a,
+html[data-theme="dark"] .public-site .public-footer button{color:#c4d1e2}
+html[data-theme="dark"] .public-site .public-nav a:hover{background:#2a3e59;color:#fff}
+html[data-theme="dark"] .public-site .public-menu-toggle{background:#223650;border-color:#49617d}
+html[data-theme="dark"] .public-site .public-menu-toggle span{background:#e5eefb}
+html[data-theme="dark"] .public-site .public-hero h1,
+html[data-theme="dark"] .public-site .public-section-heading h2,
+html[data-theme="dark"] .public-site .about-section h2,
+html[data-theme="dark"] .public-site .contact-section h2,
+html[data-theme="dark"] .public-site .standalone-page h1,
+html[data-theme="dark"] .public-site .standalone-page h2{color:#e6effc}
+html[data-theme="dark"] .public-site .public-hero h1 em{color:#65d8c0}
+html[data-theme="dark"] .public-site .public-kicker{color:#72ddc7}
+html[data-theme="dark"] .public-site .public-hero-copy>p,
+html[data-theme="dark"] .public-site .public-trust,
+html[data-theme="dark"] .public-site .public-section-heading p,
+html[data-theme="dark"] .public-site .about-section p,
+html[data-theme="dark"] .public-site .contact-section p,
+html[data-theme="dark"] .public-site .standalone-page>p,
+html[data-theme="dark"] .public-site .standalone-page li,
+html[data-theme="dark"] .public-site .legal-copy p,
+html[data-theme="dark"] .public-site .legal-summary p,
+html[data-theme="dark"] .public-site .public-footer p,
+html[data-theme="dark"] .public-site .public-footer small{color:#adbbce}
+html[data-theme="dark"] .public-site .hero-orbit{border-color:#344b67}
+html[data-theme="dark"] .public-site .hero-window,
+html[data-theme="dark"] .public-site .hero-floating-card,
+html[data-theme="dark"] .public-site .public-proof,
+html[data-theme="dark"] .public-site .feature-card,
+html[data-theme="dark"] .public-site .faq-grid details,
+html[data-theme="dark"] .public-site .standalone-faq details,
+html[data-theme="dark"] .public-site .legal-copy,
+html[data-theme="dark"] .public-site .legal-summary{
+  background:#19283e;border-color:#354963;color:#e7eef9;
+}
+html[data-theme="dark"] .public-site .hero-window-head,
+html[data-theme="dark"] .public-site .hero-mini-grid div,
+html[data-theme="dark"] .public-site .contact-note,
+html[data-theme="dark"] .public-site .feature-card>span{
+  background:#243852;border-color:#3a526f;color:#dce9fa;
+}
+html[data-theme="dark"] .public-site .hero-window-head b,
+html[data-theme="dark"] .public-site .hero-mini-grid small,
+html[data-theme="dark"] .public-site .hero-floating-card small,
+html[data-theme="dark"] .public-site .hero-invoice-row,
+html[data-theme="dark"] .public-site .public-proof span,
+html[data-theme="dark"] .public-site .feature-card p,
+html[data-theme="dark"] .public-site .faq-grid details p,
+html[data-theme="dark"] .public-site .standalone-faq details p,
+html[data-theme="dark"] .public-site .contact-note span{color:#adbbce}
+html[data-theme="dark"] .public-site .hero-mini-grid b,
+html[data-theme="dark"] .public-site .hero-invoice-row b,
+html[data-theme="dark"] .public-site .hero-floating-card b,
+html[data-theme="dark"] .public-site .public-proof strong,
+html[data-theme="dark"] .public-site .feature-card h3,
+html[data-theme="dark"] .public-site .faq-grid summary,
+html[data-theme="dark"] .public-site .standalone-faq summary,
+html[data-theme="dark"] .public-site .contact-note strong{color:#e1ecfb}
+html[data-theme="dark"] .public-site .hero-chart,
+html[data-theme="dark"] .public-site .hero-invoice-row,
+html[data-theme="dark"] .public-site .about-section,
+html[data-theme="dark"] .public-site .legal-section,
+html[data-theme="dark"] .public-site .public-proof div{border-color:#354963}
+html[data-theme="dark"] .public-site .public-proof div{border-left-color:#354963}
+html[data-theme="dark"] .public-site .contact-note{background:#223650;border-color:#405a78}
+html[data-theme="dark"] .public-site .public-footer{background:#141f31;border-top:1px solid #354963}
+html[data-theme="dark"] .public-site .button-ghost,
+html[data-theme="dark"] .public-site .button-outline{
+  background:#1d3049;color:#dceaff;border-color:#4a6380;
+}
+html[data-theme="dark"] .public-site .button-ghost:hover,
+html[data-theme="dark"] .public-site .button-outline:hover{background:#2a4260}
+html[data-theme="dark"] .public-site .public-cta-band{border:1px solid #42638b}
+html[data-theme="dark"] .public-site .public-cta-band p{color:#e0ebfa}
+html[data-theme="dark"] .public-site .public-cta-band .button-light{background:#f7fbff;color:#174b91}
+html[data-theme="dark"] .public-site .auth-card{background:#19283e;border-color:#354963;color:#e7eef9}
+html[data-theme="dark"] .public-site .auth-card h1,
+html[data-theme="dark"] .public-site .auth-card h2,
+html[data-theme="dark"] .public-site .auth-card label{color:#e7eef9}
+html[data-theme="dark"] .public-site .auth-card input,
+html[data-theme="dark"] .public-site .auth-card select,
+html[data-theme="dark"] .public-site .auth-card textarea{background:#111e31;border-color:#49617d;color:#e7eef9}
+html[data-theme="dark"] .public-site .auth-card .auth-description,
+html[data-theme="dark"] .public-site .auth-card .helper,
+html[data-theme="dark"] .public-site .auth-card .password-strength small{color:#adbbce}
+html[data-theme="dark"] .public-site .auth-close{background:#2a3d57;color:#e7eef9}
+html[data-theme="dark"] .public-site .auth-security-note{background:#243852;border-color:#405a78;color:#cbd9eb}
+html[data-theme="dark"] .public-site .password-strength-track{background:#3b506b}
+html[data-theme="dark"] .public-site .about-mark{border:1px solid #49617d}
+html[data-theme="dark"] .public-site .public-menu-toggle:focus-visible,
+html[data-theme="dark"] .public-site .public-header button:focus-visible,
+html[data-theme="dark"] .public-site a:focus-visible{outline-color:#9ac4ff}
+@media(max-width:650px){
+ html[data-theme="dark"] .public-site .public-nav{background:#18263b;border-top:1px solid #354963}
+}
