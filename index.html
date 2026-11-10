@@ -125,6 +125,19 @@
 </div></section></section><section class="app-view" data-view="saved"><div class="view-heading"><h2>فاکتورهای ذخیره‌شده</h2><p>فاکتورهای صادرشده را از فضای ابری مشاهده کن.</p></div><section class="panel page-panel"><div class="form-section saved-section">
 <div class="section-heading"><div><h2>فاکتورهای ذخیره‌شده</h2><p>فاکتورهای صادرشدهٔ حساب کاربری در این بخش نمایش داده می‌شوند.</p></div><span class="step-number">۳</span></div>
 <div class="saved-invoices" id="savedInvoices"><p class="helper">هنوز فاکتوری ذخیره نشده است.</p></div>
+<div class="form-section" id="paymentPanel" hidden>
+ <div class="section-heading"><div><h3 id="paymentPanelTitle">ثبت دریافت</h3><p id="paymentInvoiceSummary" class="helper"></p></div></div>
+ <div class="management-form">
+  <div class="field"><label for="paymentAmount">مبلغ دریافتی</label><input id="paymentAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="مبلغ"/></div>
+  <div class="field"><label for="paymentMethod">روش دریافت</label><select id="paymentMethod"><option value="cash">نقدی</option><option value="card">کارت‌خوان</option><option value="bank_transfer">واریز بانکی</option><option value="other">سایر</option></select></div>
+  <div class="field"><label for="paymentReference">شماره پیگیری (اختیاری)</label><input id="paymentReference" maxlength="200" placeholder="شماره مرجع یا پیگیری"/></div>
+  <div class="field"><label for="paymentNote">توضیحات (اختیاری)</label><textarea id="paymentNote" rows="2" maxlength="1000" placeholder="توضیحات دریافت"></textarea></div>
+ </div>
+ <div class="saved-actions"><button class="button button-primary" id="savePayment" type="button">ثبت دریافت</button><button class="button button-light" id="cancelPayment" type="button">بستن</button></div>
+ <p class="status-message" id="paymentStatus" role="status"></p>
+ <h4>سوابق دریافت و برگشت</h4>
+ <div class="records-list" id="paymentHistory"></div>
+</div>
 </div></section></section><section class="app-view" data-view="backup"><div class="view-heading"><h2>پشتیبان‌گیری و بازیابی</h2><p>برای نگهداری امن اطلاعات، مرتباً فایل پشتیبان تهیه کن.</p></div><section class="panel page-panel"><div class="form-section data-tools">
 <div class="section-heading"><div><h2>پشتیبان‌گیری اطلاعات</h2><p>یک نسخه از کالاها، مشتریان و فاکتورها در فایل ذخیره کن.</p></div><span class="step-number">۶</span></div>
 <div class="saved-actions"><button class="button button-light" id="exportData" type="button">خروجی پشتیبان (JSON)</button><input accept=".json,application/json" hidden="" id="importData" type="file" disabled/></div>
