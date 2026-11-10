@@ -313,3 +313,57 @@ input:focus,textarea:focus,select:focus{border-color:#6c9be0;box-shadow:0 0 0 3p
 /* Backup and restore actions */
 .data-tools .saved-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
 @media(max-width:520px){.data-tools .saved-actions .button{width:100%}}
+
+/* Theme modes: system, light and dark. Invoice artwork stays print-white. */
+.theme-control{display:flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid var(--line);border-radius:10px;background:var(--surface,var(--panel));color:var(--muted);font-size:11px}
+.theme-control select{width:auto;min-height:30px;padding:3px 22px 3px 6px;border:0;background:transparent;color:inherit;font-size:11px;cursor:pointer}
+.theme-control select:focus{box-shadow:none;outline:2px solid var(--focus);outline-offset:2px}
+:root{--surface:#fff;--surface-soft:#f7f9fc;--surface-raised:#fff;--focus:#75a7ec}
+html[data-theme="dark"]{color-scheme:dark;--green:#78aaf2;--green2:#9bc2ff;--mint:#243752;--ink:#e4ecf7;--muted:#9eacc0;--line:#33435b;--orange:#70cabb;--surface:#18253a;--surface-soft:#1d2c43;--surface-raised:#22334d;--focus:#8bb9ff}
+html[data-theme="dark"] body{background:#101a2b;color:var(--ink)}
+html[data-theme="dark"] .topbar,html[data-theme="dark"] .main-nav,html[data-theme="dark"] .panel,
+html[data-theme="dark"] .report-stat,html[data-theme="dark"] .report-inner,
+html[data-theme="dark"] .management-form,html[data-theme="dark"] .invoice-filters,
+html[data-theme="dark"] .saved-invoice,html[data-theme="dark"] .record-row,
+html[data-theme="dark"] .item-editor,html[data-theme="dark"] .legal-summary{background:var(--surface);border-color:var(--line);color:var(--ink)}
+html[data-theme="dark"] .topbar{box-shadow:0 2px 14px #0004}
+html[data-theme="dark"] .main-nav{box-shadow:0 5px 18px #0003}
+html[data-theme="dark"] .nav-item{color:#b7c6da}
+html[data-theme="dark"] .nav-item:hover{background:#293b55;color:#fff}
+html[data-theme="dark"] .nav-item.active{background:#24569a;color:#fff}
+html[data-theme="dark"] .view-heading h2,html[data-theme="dark"] .intro h1,
+html[data-theme="dark"] .section-heading h2,html[data-theme="dark"] .report-stat strong,
+html[data-theme="dark"] .record-main strong,html[data-theme="dark"] .saved-invoice-info strong{color:#dce9fb}
+html[data-theme="dark"] label,html[data-theme="dark"] .section-heading p,
+html[data-theme="dark"] .view-heading p,html[data-theme="dark"] .intro-text,
+html[data-theme="dark"] .record-main span,html[data-theme="dark"] .saved-invoice-info span,
+html[data-theme="dark"] .helper,html[data-theme="dark"] .site-footer{color:var(--muted)}
+html[data-theme="dark"] input,html[data-theme="dark"] textarea,html[data-theme="dark"] select{background:#111e31;border-color:#40516b;color:#e4ecf7}
+html[data-theme="dark"] input::placeholder,html[data-theme="dark"] textarea::placeholder{color:#8191a8}
+html[data-theme="dark"] input:focus,html[data-theme="dark"] textarea:focus,html[data-theme="dark"] select:focus{border-color:#79aef5;box-shadow:0 0 0 3px #79aef526}
+html[data-theme="dark"] .button-light,html[data-theme="dark"] .theme-control{background:#263a57;color:#dce9fb;border-color:#40516b}
+html[data-theme="dark"] .button-outline{background:#1b2a40;color:#dce9fb;border-color:#50627c}
+html[data-theme="dark"] .button-danger{background:#482c38;color:#ffc5c5;border-color:#704454}
+html[data-theme="dark"] .step-number{background:#263b59;color:#a9caff}
+html[data-theme="dark"] .version{background:#263a57;color:#c3d8f6}
+html[data-theme="dark"] .invoice-filters{background:var(--surface-soft)}
+html[data-theme="dark"] .privacy-note{background:#3a3022;border-color:#69543a;color:#e7c99a}
+html[data-theme="dark"] .low-stock{color:#ffc16c}
+html[data-theme="dark"] .report-volume-chart .volume-track{background:#293b55}
+html[data-theme="dark"] .volume-item strong,html[data-theme="dark"] .share-legend>div{color:#c4d2e4}
+html[data-theme="dark"] .share-ring:before{background:#18253a}
+html[data-theme="dark"] .share-ring span{color:#e4ecf7}
+html[data-theme="dark"] .theme-control select{background:transparent;color:#e4ecf7}
+html[data-theme="dark"] .auth-screen{background:#0b1422eF}
+html[data-theme="dark"] .auth-card{background:#18253a;border-color:#33435b;color:#e4ecf7}
+html[data-theme="dark"] .auth-card h1,html[data-theme="dark"] .auth-description,
+html[data-theme="dark"] .auth-card label{color:#e4ecf7}
+html[data-theme="dark"] .auth-security-note{background:#22334d;color:#b7c6da}
+html[data-theme="dark"] .auth-close{color:#dce9fb}
+html[data-theme="dark"] .password-strength-track{background:#34445b}
+html[data-theme="dark"] .invoice,html[data-theme="dark"] #invoicePreview{background:#fff!important;color:#25342d!important;color-scheme:light}
+html[data-theme="dark"] .invoice-top h2,html[data-theme="dark"] .grand-total{color:#174b91!important}
+html[data-theme="dark"] .invoice-table th{background:#f2f7fd!important;color:#718096!important}
+html[data-theme="dark"] .customer-block{background:#f2f7fd!important;color:#25342d!important}
+@media(max-width:600px){.topbar-actions{flex-wrap:wrap;justify-content:flex-end}.theme-control{order:0}.theme-control select{max-width:105px}}
+@media print{html[data-theme="dark"] body{background:#fff!important}html[data-theme="dark"] .invoice,html[data-theme="dark"] #invoicePreview{background:#fff!important;color:#111!important}}
